@@ -16,6 +16,7 @@ For a demonstration of this language service's capabilities with Microsoft's [Mo
 To [install](#installation-instructions) this language service as a dependency into your project, you will need to have [Node.js](https://nodejs.org/en/download/) installed.
 
 **Supported features:**
+
 - code actions
 - code completion
 - definition
@@ -34,7 +35,7 @@ To [install](#installation-instructions) this language service as a dependency i
 If you wish to build and compile this language server, you must first install [Node.js](https://nodejs.org/en/download/) if you have not already done so.
 After you have installed Node.js and cloned the repository with Git, you may now proceed to build and compile the language server with the following commands:
 
-```
+```batch
 npm install
 npm run build
 npm test
@@ -51,7 +52,7 @@ To add this language service into your project, you must add `dockerfile-languag
 The `/example/` folder includes an example for using this language service in a browser as a static HTML page with JavaScript.
 To build the example, please run the following commands from the root of the project:
 
-```
+```batch
 npm install
 cd example
 npm install

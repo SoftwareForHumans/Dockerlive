@@ -110,7 +110,7 @@
 		"@types/uuid": "^7.0.3",
 		"@types/xml2js": "^0.4.5",
 		"dockerfile-ast": "0.0.20",
-		"dockerode": "^3.1.0",
+		"dockerode": "^3.3.2",
 		"file-uri-to-path": "^2.0.0",
 		"parse-pairs": "^1.0.0",
 		"strip-ansi": "^6.0.0",
