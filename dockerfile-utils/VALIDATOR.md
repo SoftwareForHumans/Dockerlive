@@ -13,7 +13,8 @@ The currently supported version of the Docker builder is **Docker CE 17.09 [2017
 If no file is specified, the CLI will attempt to validate the contents of a file named `Dockerfile` in the current working directory if it exists.
 
 ### Help
-```
+
+```batch
 > dockerfile-utils lint --help
 Usage: dockerfile-utils lint [options] [file]
 
@@ -24,19 +25,21 @@ Options:
 ```
 
 ### Example
+
 ```Dockerfile
-      FROM node
+FROM node
 HEALTHCHECK --interva=30s CMD ls
-  RUN "echo" ls \
-  
-  "echoS"sdfdf \
-  asdfasdf
-  copy . .
+RUN "echo" ls \
+"echoS"sdfdf \
+asdfasdf
+copy . .
 ADD app.zip
 CMD ls
 ```
+
 #### CLI Output
-```
+
+```b
 > dockerfile-utils lint
 Line: 2
 HEALTHCHECK --interva=30s CMD ls
@@ -56,10 +59,13 @@ ADD app.zip
     ^^^^^^^
 Error: ADD requires at least two arguments
 ```
+
 #### JSON Output
+
 For readability purposes, the output below has been formatted manually.
 The output on the command line will not include any whitespaces.
-```
+
+```b
 > dockerfile-utils lint -j
 [
   {
@@ -100,7 +106,9 @@ The output on the command line will not include any whitespaces.
 ## Supported Validation Checks
 
 ### General
+
 #### Instructions
+
 - instructions should be written in uppercase
 - instruction has no arguments
 - instruction has an insufficient number of arguments
@@ -108,35 +116,45 @@ The output on the command line will not include any whitespaces.
 - duplicate instruction flags detected
 - unknown instruction flag detected
 - instruction flag has no value defined
+
 #### Directives
+
 - invalid value specified for `escape` parser directive
 - directives should be written in lowercase.
+
 #### Others
+
 - empty continuation lines
 
 ### CMD
+
 - multiple `CMD` instructions detected
 
 ### ENTRYPOINT
+
 - multiple `ENTRYPOINT` instructions detected
 
 ### ENV
+
 - syntax missing equals sign '`=`'
 - syntax missing single quote '`'`'
 - syntax missing double quotes '`"`'
 - property has no name
 
 ### EXPOSE
+
 - invalid container port specified
 - invalid protocol specified
 
 ### FROM
+
 - `FROM` instruction not found at the beginning of the Dockerfile
 - invalid build stage name specified
 - duplicate build stage name detected
 - second argument detected but not an `AS`
 
 ### HEALTHCHECK
+
 - `CMD` form has no arguments
 - `NONE` form has arguments defined
 - type that is not `CMD` or `NONE` detected
@@ -148,20 +166,25 @@ The output on the command line will not include any whitespaces.
 - multiple `HEALTHCHECK` instructions detected
 
 ### LABEL
+
 - syntax missing equals sign '`=`'
 - syntax missing single quote '`'`'
 - syntax missing double quotes '`"`'
 - property has no name
 
 ### MAINTAINER
+
 - use of deprecated instruction detected
 
 ### ONBUILD
+
 - can't chain `ONBUILD` instruction with `ONBUILD ONBUILD`
 - invalid `ONBUILD` trigger instruction
 
 ### SHELL
+
 - `SHELL` not written in JSON form
 
 ### STOPSIGNAL
+
 - invalid stop signal

@@ -10,6 +10,7 @@ This is a language server for Dockerfiles powered by Node.js written in TypeScri
 To [install and run](#installation-instructions) this language server, you will need to have either [Node.js](https://nodejs.org/en/download/) or [Docker](https://www.docker.com/get-docker) installed on your computer.
 
 **Supported features:**
+
 - code actions
 - code completion
 - definition
@@ -25,6 +26,7 @@ To [install and run](#installation-instructions) this language server, you will 
 - signature help
 
 **Projects that use this language server:**
+
 - [vscode-docker](https://github.com/Microsoft/vscode-docker)
 - [atom-ide-docker](https://github.com/josa42/atom-ide-docker)
 - [Sourcegraph](https://sourcegraph.com/)
@@ -34,6 +36,7 @@ This repository only contains the code necessary for launching a Dockerfile lang
 The actual code for parsing a Dockerfile and offering editor features such as code completion or hovers is not contained within this repository.
 
 The code for analyzing and processing a Dockerfile is contained in the following three libraries:
+
 - [dockerfile-ast](https://github.com/rcjsuen/dockerfile-ast) - parses a Dockerfile
 - [dockerfile-language-service](https://github.com/rcjsuen/dockerfile-language-service) - provides API functions for handling the different requests defined by the language server protocol
 - [dockerfile-utils](https://github.com/rcjsuen/dockerfile-utils) - validates and formats a Dockerfile, can be run from the CLI
@@ -47,7 +50,7 @@ This online editor is a very good representation of what is possible when this l
 If you wish to build and compile this language server, you must first install [Node.js](https://nodejs.org/en/download/) if you have not already done so.
 After you have installed Node.js and cloned the repository with Git, you may now proceed to build and compile the language server with the following commands:
 
-```
+```batch
 npm install
 npm run build
 npm test
@@ -65,7 +68,7 @@ To install this language server onto your computer, please install the
 [dockerfile-language-server-nodejs npm module](https://www.npmjs.com/package/dockerfile-language-server-nodejs).
 The `-g` flag will install the npm module globally onto your computer.
 
-```
+```batch
 npm install -g dockerfile-language-server-nodejs
 ```
 
@@ -74,13 +77,14 @@ server with the `docker-langserver` binary. You should specify
 the desired method of communicating with the language server via one
 of the three arguments shown below.
 
-```
+```batch
 docker-langserver --node-ipc
 docker-langserver --stdio
 docker-langserver --socket=<port>
 ```
 
 ### Docker Image
+
 The `docker-langserver` binary is also available as a Docker image under the name `rcjsuen/docker-langserver`.
 
 ## Language Server Settings
@@ -112,6 +116,7 @@ interface Settings {
 ```
 
 ## Communicating with the Server
+
 ### Node IPC
 
 With the `child_process` API, you can `fork()` a new Node.js process
@@ -194,7 +199,7 @@ lspProcess.stdout.on("data", (message) => {
 initialize();
 ```
 
-#### vscode-jsonrpc
+#### I/O vscode-jsonrpc
 
 The `StreamMessageReader` and `StreamMessageWriter` classes from the
 `vscode-jsonrpc` module will handle the `Content-Length` headers for you so you
@@ -296,7 +301,7 @@ server.listen(3000, () => {
 });
 ```
 
-#### vscode-jsonrpc
+#### Sockets vscode-jsonrpc
 
 The `SocketMessageReader` and `SocketMessageWriter` classes from the
 `vscode-jsonrpc` module will handle the `Content-Length` headers for you so you

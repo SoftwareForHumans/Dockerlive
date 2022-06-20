@@ -11,7 +11,8 @@ The formatter included will perform the following operations on a Dockerfile:
 If no file is specified, the CLI will attempt to format the contents of a file named `Dockerfile` in the current working directory if it exists.
 
 ### Help
-```
+
+```batch
 > dockerfile-utils format --help
 Usage: dockerfile-utils format [options] [file]
 
@@ -23,6 +24,7 @@ Options:
 ```
 
 ### Example
+
 ```Dockerfile
 FROM node:alpine
  COPY lib /dockerfile-utils/lib
@@ -33,8 +35,10 @@ RUN npm install --production && \
 chmod +x /dockerfile-utils/bin/dockerfile-utils
 ENTRYPOINT [ "/dockerfile-utils/bin/dockerfile-utils" ]
 ```
+
 #### Formatting with Tabs
-```
+
+```batch
 > dockerfile-utils format -t
 FROM node:alpine
 COPY lib /dockerfile-utils/lib
@@ -42,11 +46,13 @@ COPY bin /dockerfile-utils/bin
 COPY package.json /dockerfile-utils/package.json
 WORKDIR /dockerfile-utils/
 RUN npm install --production && \
-	chmod +x /dockerfile-utils/bin/dockerfile-utils
+    chmod +x /dockerfile-utils/bin/dockerfile-utils
 ENTRYPOINT [ "/dockerfile-utils/bin/dockerfile-utils" ]
 ```
+
 #### Formatting with Spaces
-```
+
+```batch
 > dockerfile-utils format -s 5
 FROM node:alpine
 COPY lib /dockerfile-utils/lib

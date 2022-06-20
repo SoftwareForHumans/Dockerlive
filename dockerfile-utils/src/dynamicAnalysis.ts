@@ -88,7 +88,7 @@ export class DynamicAnalysis {
 		return new Promise(async (res, _rej) => {
 			this.docker.listContainers({ all: true }, async (err, containers) => {
 				if (err) {
-					this.log("Start Docker to enable dynamic analysis");
+					this.log("Start Docker to enable dynamic analysis"+ " " + err);
 					res(false);
 					return;
 				}
