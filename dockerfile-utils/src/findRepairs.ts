@@ -11,15 +11,9 @@ import {
   Range,
   DiagnosticSeverity,
 } from "vscode-languageserver-types";
-import Repair from "./repair";
 
-export default class NoInstallRecommendsRepair implements Repair {
-  range: Range;
-  docId: VersionedTextDocumentIdentifier;
-
-  getDiagnostic(
+export function checkNoInstallRecommends(
     dockerfile: Dockerfile,
-    docId: VersionedTextDocumentIdentifier
   ): Diagnostic | undefined {
     const runInstructions = dockerfile
       .getInstructions()
@@ -50,30 +44,12 @@ export default class NoInstallRecommendsRepair implements Repair {
       end: installArg!!.getRange().end,
     };
 
-    this.range = range;
-    this.docId = docId;
-
     return {
       range,
       message:
         "The --no-install-recommends option is not being used with apt-get install.",
+      code: "R:NOINSTALLRECOMMENDS",
       severity: DiagnosticSeverity.Warning,
       source: "repair-module",
     };
   }
-  getCodeAction(): CodeAction {
-    const edit = TextEdit.replace(
-      this.range,
-      "apt-get install --no-install-recommends"
-    );
-    const edits = TextDocumentEdit.create(this.docId, [edit]);
-
-    const action = CodeAction.create(
-      "Add --no-install-recommends option to apt-get install command",
-      { documentChanges: [edits] },
-      CodeActionKind.Refactor
-    );
-
-    return action;
-  }
-}
