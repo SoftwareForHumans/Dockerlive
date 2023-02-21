@@ -3,12 +3,15 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import {
-    TextDocument, Range, Position, Diagnostic, DiagnosticSeverity, CodeLens
+    Range, Position, Diagnostic, DiagnosticSeverity, CodeLens, VersionedTextDocumentIdentifier
 } from 'vscode-languageserver-types';
 import { Dockerfile, Flag, Instruction, JSONInstruction, Add, Arg, Cmd, Copy, Entrypoint, From, Healthcheck, Onbuild, ModifiableInstruction, PropertyInstruction, Property, DockerfileParser, Directive, Keyword } from 'dockerfile-ast';
 import { ValidationCode, ValidationSeverity, ValidatorSettings } from './main';
 import { DynamicAnalysis } from './dynamicAnalysis';
 import Dockerode from 'dockerode';
+import Repair from '../../repair/repair';
+import NoInstallRecommendsRepair from '../../repair/noInstallRecommends';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 
 export const KEYWORDS = [
     "ADD",
@@ -236,6 +239,8 @@ export class Validator {
     }
 
     validate(document: TextDocument, sendDiagnostics?: Function, sendProgress?: Function, sendPerformanceStats?: Function, sendFilesystemData ?: Function, sendCodeLenses?: Function): Diagnostic[] {
+        console.log("IM VALIDATING");
+        
         this.document = document;
         let problems: Diagnostic[] = [];
         let dockerfile = DockerfileParser.parse(document.getText());
@@ -352,6 +357,16 @@ export class Validator {
                 //console.log(e);
             }
         }
+
+        //TEMPORARY REPAIR CODE
+        const repair: NoInstallRecommendsRepair = new NoInstallRecommendsRepair();
+        const id = VersionedTextDocumentIdentifier.create(document.uri, document.version);
+        const problem = repair.getDiagnostic(dockerfile, id);
+        console.log("IM HERE WITH THE Problem")
+        console.log(problem);
+        
+        if (problem) problems.push(problem);
+        //TEMPORARY REPAIR CODE
 
         let foundError = false;
 

@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {
+	Command,
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
@@ -15,6 +16,8 @@ import {
 import { PerformanceGraphs } from './performance';
 import { FilesystemVisualizer } from './filesystem';
 import { Analytics } from './analytics';
+
+import { CodeAction } from 'vscode';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -50,6 +53,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		client.sendNotification("dockerlive/toggle");
 		analytics.sendEvent("toggleAnalysis");
 	});
+
+	context.subscriptions.push(
+		vscode.languages.registerCodeActionsProvider( 
+			{language: "dockerfile", scheme: "file"},
+			new CodeActionProvider()
+		)
+	)
 
 	let codeLensProvider = new DockerfileCodeLensProvider();
 
@@ -328,4 +338,28 @@ class DockerfileCodeLensProvider implements vscode.CodeLensProvider {
 	resolveCodeLens(codeLens: vscode.CodeLens): vscode.CodeLens{
 		return codeLens;
 	}
+}
+
+class CodeActionProvider implements vscode.CodeActionProvider<vscode.CodeAction> {
+    public provideCodeActions(
+        document: vscode.TextDocument, range: vscode.Range | vscode.Selection,
+        context: vscode.CodeActionContext, token: vscode.CancellationToken):
+        vscode.CodeAction[] {
+			
+			console.log(range)
+			console.log(document);
+			console.log(context);
+			
+			
+
+			let actions : CodeAction[] = [];
+
+			let action = new CodeAction("Test Action", vscode.CodeActionKind.Refactor)
+
+			action.edit = new vscode.WorkspaceEdit()
+
+			actions.push(action);
+
+			return actions
+    }
 }
