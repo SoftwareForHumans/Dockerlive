@@ -77,7 +77,7 @@ export class Validator {
 
   private dynamicAnalysis: DynamicAnalysis;
 
-  private dynAnalEnabled: boolean = true;
+  private dynAnalEnabled: boolean = false;
 
   constructor(settings?: ValidatorSettings) {
     if (settings) {
@@ -91,10 +91,10 @@ export class Validator {
     this.dynAnalEnabled = !this.dynAnalEnabled;
     if (this.dynAnalEnabled) {
       console.log(
-        "ENABLED ANALYSIS - Change the document to trigger an analysis"
+        "ENABLED DYNAMIC ANALYSIS - Change the document to trigger a dynamic analysis"
       );
     } else {
-      console.log("DISABLED ANALYSIS");
+      console.log("DISABLED ANALYSIS - Change the document to trigger a static analysis");
       if (this.dynamicAnalysis) {
         this.dynamicAnalysis.destroy();
       }
