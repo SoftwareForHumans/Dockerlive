@@ -121,7 +121,7 @@ export class DynamicAnalysis {
 			return;
 		}
 
-		let problems = Array.from(this.DA_problems.values());
+		let problems = Array.from(this.DA_problems.values()).concat(this.SA_problems);
 
 		this.sendDiagnostics(this.document.uri, problems);
 	}

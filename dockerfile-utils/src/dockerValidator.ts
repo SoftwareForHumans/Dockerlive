@@ -77,7 +77,7 @@ export class Validator {
 
   private dynamicAnalysis: DynamicAnalysis;
 
-  private dynAnalEnabled: boolean = false;
+  private dynAnalEnabled: boolean = true;
 
   constructor(settings?: ValidatorSettings) {
     if (settings) {
