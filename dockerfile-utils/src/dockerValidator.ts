@@ -35,7 +35,7 @@ import { DynamicAnalysis } from "./dynamicAnalysis";
 import Dockerode from "dockerode";
 import NoInstallRecommendsRepair from "../../client/src/repair/NoInstallRecommendsRepair";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { checkNoInstallRecommends } from './findRepairs';
+import checkRepairableProblems from './findRepairs';
 
 export const KEYWORDS = [
   "ADD",
@@ -94,7 +94,7 @@ export class Validator {
         "ENABLED DYNAMIC ANALYSIS - Change the document to trigger a dynamic analysis"
       );
     } else {
-      console.log("DISABLED ANALYSIS - Change the document to trigger a static analysis");
+      console.log("DISABLED DYNAMIC ANALYSIS - Change the document to trigger a static analysis");
       if (this.dynamicAnalysis) {
         this.dynamicAnalysis.destroy();
       }
@@ -512,10 +512,9 @@ export class Validator {
       }
     }
 
-    //TEMPORARY REPAIR CODE
-    const problem = checkNoInstallRecommends(dockerfile);
-    if (problem) problems.push(problem);
-    //TEMPORARY REPAIR CODE
+    //Checking for problems that can be repaired
+    const repairableProblems = checkRepairableProblems(dockerfile);
+    if (repairableProblems.length > 0) problems.push(...repairableProblems);
 
     let foundError = false;
 
