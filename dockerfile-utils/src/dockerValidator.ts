@@ -33,9 +33,9 @@ import {
 import { ValidationCode, ValidationSeverity, ValidatorSettings } from "./main";
 import { DynamicAnalysis } from "./dynamicAnalysis";
 import Dockerode from "dockerode";
-import NoInstallRecommendsRepair from "../../client/src/repair/NoInstallRecommendsRepair";
+import AptRepair from "../../client/src/repair/AptRepair";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import checkRepairableProblems from './findRepairs';
+import checkRepairableProblems from "./findRepairs";
 
 export const KEYWORDS = [
   "ADD",
@@ -94,7 +94,9 @@ export class Validator {
         "ENABLED DYNAMIC ANALYSIS - Change the document to trigger a dynamic analysis"
       );
     } else {
-      console.log("DISABLED DYNAMIC ANALYSIS - Change the document to trigger a static analysis");
+      console.log(
+        "DISABLED DYNAMIC ANALYSIS - Change the document to trigger a static analysis"
+      );
       if (this.dynamicAnalysis) {
         this.dynamicAnalysis.destroy();
       }

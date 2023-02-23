@@ -62,10 +62,16 @@ function checkMissingElements(
     end: installArg.getRange().end,
   };
 
-  if (args.find((arg) => arg.getValue() === "--no-install-recommends") === undefined)
+  if (
+    args.find((arg) => arg.getValue() === "--no-install-recommends") ===
+    undefined
+  )
     problems.push(createNoInstallRecommendsDiagnostic(range));
 
-  if (args.find((arg) => arg.getValue() === "update") === undefined)
+  if (
+    args.find((arg) => arg.getValue() === "update") === undefined &&
+    args.find((arg) => arg.getValue() === "-y") !== undefined
+  )
     problems.push(createUpdateBeforeInstallDiagnostic(range));
 
   if (args.find((arg) => arg.getValue() === "-y") === undefined)
