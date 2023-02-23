@@ -30,7 +30,7 @@ export function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
     );
 
   if (aptInstructions.length === 0) return [];
-  
+
   aptInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
     const aptGetArg = args.find((arg) => arg.getValue() === "apt-get");
@@ -38,23 +38,63 @@ export function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
 
     if (installArg === undefined) return; //goes to next iteration
 
-    const noInstallRecommendsProblem = checkNoInstallRecommends(aptGetArg, installArg, args)
-    if (noInstallRecommendsProblem !== undefined) problems.push(noInstallRecommendsProblem);
-  })
+    const missingElementProblems = checkMissingElements(
+      aptGetArg,
+      installArg,
+      args
+    );
+    if (missingElementProblems.length > 0)
+      problems.push(...missingElementProblems);
+  });
 
   return problems;
 }
 
-function checkNoInstallRecommends(aptGetArg: Argument, installArg: Argument, args: Argument[]): Diagnostic | undefined {
-  if (args.find((arg) => arg.getValue() === "--no-install-recommends")) return;
+function checkMissingElements(
+  aptGetArg: Argument,
+  installArg: Argument,
+  args: Argument[]
+): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
   const range: Range = {
     start: aptGetArg.getRange().start,
     end: installArg.getRange().end,
   };
+
+  if (args.find((arg) => arg.getValue() === "--no-install-recommends") === undefined)
+    problems.push(createNoInstallRecommendsDiagnostic(range));
+
+  if (args.find((arg) => arg.getValue() === "update") === undefined)
+    problems.push(createUpdateBeforeInstallDiagnostic(range));
+
+  if (args.find((arg) => arg.getValue() === "-y") === undefined)
+    problems.push(createConfirmInstallDiagnostic(range));
+
+  return problems;
+}
+
+function createNoInstallRecommendsDiagnostic(range: Range): Diagnostic {
   return createRepairDiagnostic(
     range,
-    "The --no-install-recommends option is not being used with apt-get install.",
+    "The --no-install-recommends option should be used with apt-get install.",
     "NOINSTALLRECOMMENDS"
+  );
+}
+
+function createConfirmInstallDiagnostic(range: Range): Diagnostic {
+  return createRepairDiagnostic(
+    range,
+    "The -y option should be used with apt-get install.",
+    "CONFIRMINSTALL"
+  );
+}
+
+function createUpdateBeforeInstallDiagnostic(range: Range): Diagnostic {
+  return createRepairDiagnostic(
+    range,
+    "The apt-get update command should be executed before apt-get install.",
+    "UPDATEBEFOREINSTALL"
   );
 }
 
