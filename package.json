@@ -112,6 +112,7 @@
 		"dockerfile-ast": "0.0.20",
 		"dockerode": "^3.1.0",
 		"file-uri-to-path": "^2.0.0",
+		"os": "^0.1.2",
 		"parse-pairs": "^1.0.0",
 		"strip-ansi": "^6.0.0",
 		"table": "^5.4.6",
