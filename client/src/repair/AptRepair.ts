@@ -2,17 +2,12 @@ import {
   CancellationToken,
   CodeAction,
   CodeActionContext,
-  CodeActionKind,
   CodeActionProvider,
-  Command,
-  Position,
-  ProviderResult,
   Range,
   Selection,
   TextDocument,
-  Uri,
-  WorkspaceEdit,
 } from "vscode";
+import { createAction } from './common';
 
 export default class AptRepair implements CodeActionProvider<CodeAction> {
   provideCodeActions(
@@ -21,8 +16,6 @@ export default class AptRepair implements CodeActionProvider<CodeAction> {
     context: CodeActionContext,
     token: CancellationToken
   ): CodeAction[] {
-    const processedRange = this.processRange(document, range);
-    if (processedRange === undefined) return [];
     const actions: CodeAction[] = [];
 
     for (const diagnostic of context.diagnostics) {
@@ -49,55 +42,14 @@ export default class AptRepair implements CodeActionProvider<CodeAction> {
           continue;
       }
       actions.push(
-        this.createAction(
+        createAction(
           actionTitle,
           replacementText,
           document.uri,
-          processedRange
+          diagnostic.range
         )
       );
     }
-
     return actions;
-  }
-
-  createAction(
-    actionTitle: string,
-    replacementText: string,
-    uri: Uri,
-    processedRange: Range
-  ): CodeAction {
-    const action = new CodeAction(actionTitle, CodeActionKind.QuickFix);
-
-    action.edit = new WorkspaceEdit();
-    action.edit.replace(uri, processedRange, replacementText);
-    action.kind = CodeActionKind.QuickFix
-
-    return action;
-  }
-
-  processRange(document: TextDocument, range: Range): Range | undefined {
-    const start = range.start;
-    const end = range.end;
-
-    if (start.line !== end.line) return;
-
-    const line = document.lineAt(start.line);
-    const rangeText = line.text.substring(start.character, end.character);
-
-    if (rangeText === "apt-get install") return range;
-
-    const lineNumber = start.line;
-    const lineText = document.lineAt(lineNumber).text;
-
-    const firstCharNumber = lineText.indexOf("apt-get");
-    const lastCharNumber = lineText.indexOf("install") + "install".length;
-
-    const processedStart = new Position(lineNumber, firstCharNumber);
-    const processedEnd = new Position(lineNumber, lastCharNumber);
-
-    const processedRange = new Range(processedStart, processedEnd);
-
-    return processedRange;
   }
 }
