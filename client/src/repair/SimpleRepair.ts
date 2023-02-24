@@ -7,9 +7,9 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction } from './common';
+import { createAction } from "./common";
 
-export default class AptRepair implements CodeActionProvider<CodeAction> {
+export default class SimpleRepair implements CodeActionProvider<CodeAction> {
   provideCodeActions(
     document: TextDocument,
     range: Range | Selection,
@@ -27,16 +27,26 @@ export default class AptRepair implements CodeActionProvider<CodeAction> {
       switch (diagnostic.code) {
         case "R:NOINSTALLRECOMMENDS":
           actionTitle =
-            "Add --no-install-recommends option to apt-get install command";
+            "Add --no-install-recommends option to apt-get install command.";
           replacementText = "apt-get install --no-install-recommends";
           break;
         case "R:CONFIRMINSTALL":
-          actionTitle = "Add -y option to apt-get install command";
+          actionTitle = "Add -y option to apt-get install command.";
           replacementText = "apt-get install -y";
           break;
         case "R:UPDATEBEFOREINSTALL":
-          actionTitle = "Add the apt-get update command before apt-get install";
+          actionTitle =
+            "Add the apt-get update command before apt-get install.";
           replacementText = "apt-get update && apt-get install";
+          break;
+        case "R:NOADD":
+          actionTitle =
+            "Replace the ADD instruction with the COPY instruction.";
+          replacementText = "COPY";
+          break;
+        case "R:NOMAINTAINER":
+          actionTitle = "Remove the MAINTAINER instruction.";
+          replacementText = "";
           break;
         default:
           continue;

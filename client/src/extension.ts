@@ -18,8 +18,8 @@ import { FilesystemVisualizer } from "./filesystem";
 import { Analytics } from "./analytics";
 
 import { CodeAction } from "vscode";
-import AptRepair from "./repair/AptRepair";
-import ConsecutiveRunRepair from './repair/ConsecutiveRunRepair';
+import SimpleRepair from "./repair/SimpleRepair";
+import ConsecutiveRunRepair from "./repair/ConsecutiveRunRepair";
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -59,7 +59,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
-      new AptRepair()
+      new SimpleRepair()
     )
   );
 

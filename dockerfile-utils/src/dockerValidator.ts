@@ -33,7 +33,6 @@ import {
 import { ValidationCode, ValidationSeverity, ValidatorSettings } from "./main";
 import { DynamicAnalysis } from "./dynamicAnalysis";
 import Dockerode from "dockerode";
-import AptRepair from "../../client/src/repair/AptRepair";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import checkRepairableProblems from "./findRepairs";
 
