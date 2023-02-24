@@ -13,9 +13,9 @@ import {
   Uri,
   WorkspaceEdit,
 } from "vscode";
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import { createAction } from "./common";
-import * as os from 'os';
+import * as os from "os";
 
 export default class ConsecutiveRunRepair
   implements CodeActionProvider<CodeAction>
@@ -34,11 +34,14 @@ export default class ConsecutiveRunRepair
       const instructionsText = document.getText(diagnostic.range);
       const secondRunKeywordPosition = instructionsText.lastIndexOf("RUN");
 
-	  const numberOfCharsForNewline = this.getNumberOfCharsForNewline();
+      const numberOfCharsForNewline = this.getNumberOfCharsForNewline();
 
       const replacementText =
-        instructionsText.substring(0, secondRunKeywordPosition - 2) +
-        "&& " +
+        instructionsText.substring(
+          0,
+          secondRunKeywordPosition - numberOfCharsForNewline
+        ) +
+        " && " +
         instructionsText.substring(secondRunKeywordPosition + 4);
       const action = createAction(
         "Merge consecutive RUN instructions.",
@@ -53,8 +56,8 @@ export default class ConsecutiveRunRepair
   }
 
   getNumberOfCharsForNewline(): number {
-	const systemType = os.type();
-	if (systemType.includes("Windows")) return 2;
-	return 1;
+    const systemType = os.type();
+    if (systemType.includes("Windows")) return 2;
+    return 1;
   }
 }
