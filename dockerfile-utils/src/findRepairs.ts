@@ -2,6 +2,7 @@ import { Argument, Dockerfile, Instruction } from "dockerfile-ast";
 import {
   Diagnostic,
   Range,
+  Position,
   DiagnosticSeverity,
 } from "vscode-languageserver-types";
 
@@ -12,6 +13,50 @@ export default function checkRepairableProblems(
 
   problems.push(...checkAptProblems(dockerfile));
   problems.push(...checkConsecutiveRunInstructions(dockerfile));
+  problems.push(...checkUnsuitableInstructions(dockerfile));
+
+  return problems;
+}
+
+function checkUnsuitableInstructions(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const instructions = dockerfile.getInstructions();
+
+  const addInstructions = instructions.filter(
+    (instruction) => instruction.getKeyword() === "ADD"
+  );
+  const maintainerInstructions = instructions.filter(
+    (instruction) => instruction.getKeyword() === "MAINTAINER"
+  );
+
+  addInstructions.forEach((instruction) => {
+    const instructionRangeStart = instruction.getRange().start;
+    const range = {
+      start: instructionRangeStart,
+      end: {
+        line: instructionRangeStart.line,
+        character: instructionRangeStart.character + 3
+      },
+    };
+    problems.push(
+      createRepairDiagnostic(
+        range,
+        "The COPY instruction should be used instead of the ADD instruction, if possible.",
+        "NOADD"
+      )
+    );
+  });
+
+  maintainerInstructions.forEach((instruction) => {
+    problems.push(
+      createRepairDiagnostic(
+        instruction.getRange(),
+        "The MAINTAINER instruction has been deprecated.",
+        "NOMAINTAINER"
+      )
+    );
+  });
 
   return problems;
 }
@@ -38,13 +83,13 @@ function checkConsecutiveRunInstructions(dockerfile: Dockerfile): Diagnostic[] {
         end: currentinstruction.getRange().end,
       };
 
-      const problem = createRepairDiagnostic(
-        range,
-        "Consecutive RUN instructions should be merged to minimize the number of layers.",
-        "CONSECUTIVERUN"
+      problems.push(
+        createRepairDiagnostic(
+          range,
+          "Consecutive RUN instructions should be merged to minimize the number of layers.",
+          "CONSECUTIVERUN"
+        )
       );
-      
-      problems.push(problem);
     }
   }
 
@@ -102,42 +147,36 @@ function checkMissingElements(
     args.find((arg) => arg.getValue() === "--no-install-recommends") ===
     undefined
   )
-    problems.push(createNoInstallRecommendsDiagnostic(range));
+    problems.push(
+      createRepairDiagnostic(
+        range,
+        "The --no-install-recommends option should be used with apt-get install.",
+        "NOINSTALLRECOMMENDS"
+      )
+    );
 
   if (
     args.find((arg) => arg.getValue() === "update") === undefined &&
     args.find((arg) => arg.getValue() === "-y") !== undefined
   )
-    problems.push(createUpdateBeforeInstallDiagnostic(range));
+    problems.push(
+      createRepairDiagnostic(
+        range,
+        "The apt-get update command should be executed before apt-get install.",
+        "UPDATEBEFOREINSTALL"
+      )
+    );
 
   if (args.find((arg) => arg.getValue() === "-y") === undefined)
-    problems.push(createConfirmInstallDiagnostic(range));
+    problems.push(
+      createRepairDiagnostic(
+        range,
+        "The -y option should be used with apt-get install.",
+        "CONFIRMINSTALL"
+      )
+    );
 
   return problems;
-}
-
-function createNoInstallRecommendsDiagnostic(range: Range): Diagnostic {
-  return createRepairDiagnostic(
-    range,
-    "The --no-install-recommends option should be used with apt-get install.",
-    "NOINSTALLRECOMMENDS"
-  );
-}
-
-function createConfirmInstallDiagnostic(range: Range): Diagnostic {
-  return createRepairDiagnostic(
-    range,
-    "The -y option should be used with apt-get install.",
-    "CONFIRMINSTALL"
-  );
-}
-
-function createUpdateBeforeInstallDiagnostic(range: Range): Diagnostic {
-  return createRepairDiagnostic(
-    range,
-    "The apt-get update command should be executed before apt-get install.",
-    "UPDATEBEFOREINSTALL"
-  );
 }
 
 function createRepairDiagnostic(
