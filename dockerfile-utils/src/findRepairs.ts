@@ -11,11 +11,47 @@ export default function checkRepairableProblems(
   const problems: Diagnostic[] = [];
 
   problems.push(...checkAptProblems(dockerfile));
+  problems.push(...checkConsecutiveRunInstructions(dockerfile));
 
   return problems;
 }
 
-export function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
+function checkConsecutiveRunInstructions(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const instructions = dockerfile.getInstructions();
+
+  for (let i = 1; i < instructions.length; i++) {
+    const currentinstruction = instructions[i];
+    const previousInstruction = instructions[i - 1];
+
+    const currentInstructionKeyword = currentinstruction.getKeyword();
+    const previousInstructionKeyword = previousInstruction.getKeyword();
+
+    const areConsecutiveRunInstructions =
+      currentInstructionKeyword === previousInstructionKeyword &&
+      currentInstructionKeyword == "RUN";
+
+    if (areConsecutiveRunInstructions) {
+      const range = {
+        start: previousInstruction.getRange().start,
+        end: currentinstruction.getRange().end,
+      };
+
+      const problem = createRepairDiagnostic(
+        range,
+        "Consecutive RUN instructions should be merged to minimize the number of layers.",
+        "CONSECUTIVERUN"
+      );
+      
+      problems.push(problem);
+    }
+  }
+
+  return problems;
+}
+
+function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
   const aptInstructions = dockerfile
