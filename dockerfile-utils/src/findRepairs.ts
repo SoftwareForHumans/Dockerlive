@@ -14,6 +14,38 @@ export default function checkRepairableProblems(
   problems.push(...checkAptProblems(dockerfile));
   problems.push(...checkConsecutiveRunInstructions(dockerfile));
   problems.push(...checkUnsuitableInstructions(dockerfile));
+  problems.push(...checkCdUsage(dockerfile));
+
+  return problems;
+}
+
+function checkCdUsage(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const runInstructions = dockerfile
+    .getInstructions()
+    .filter((instruction) => instruction.getKeyword() === "RUN");
+
+  runInstructions.forEach((instruction) => {
+    const args = instruction.getArguments();
+    const hasTwoArguments = args.length === 2;
+    const cdArg = args.find((arg) => arg.getValue() === "cd");
+
+    if (!hasTwoArguments || cdArg === undefined) return; //goes to next iteration
+
+    const range = {
+      start: instruction.getRange().start,
+      end: args[0].getRange().end
+    }
+
+    problems.push(
+      createRepairDiagnostic(
+        range,
+        "The working directory is not preserved between RUN instruction. Use the WORKDIR instruction instead.",
+        "NOCD"
+      )
+    );
+  });
 
   return problems;
 }
@@ -36,7 +68,7 @@ function checkUnsuitableInstructions(dockerfile: Dockerfile): Diagnostic[] {
       start: instructionRangeStart,
       end: {
         line: instructionRangeStart.line,
-        character: instructionRangeStart.character + 3
+        character: instructionRangeStart.character + 3,
       },
     };
     problems.push(

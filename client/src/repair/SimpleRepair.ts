@@ -48,6 +48,10 @@ export default class SimpleRepair implements CodeActionProvider<CodeAction> {
           actionTitle = "Remove the MAINTAINER instruction.";
           replacementText = "";
           break;
+        case "R:NOCD":
+          actionTitle = "Replace the cd command with the WORKDIR instruction.";
+          replacementText = "WORKDIR";
+          break;
         default:
           continue;
       }
