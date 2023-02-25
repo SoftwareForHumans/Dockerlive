@@ -52,6 +52,10 @@ export default class SimpleRepair implements CodeActionProvider<CodeAction> {
           actionTitle = "Replace the cd command with the WORKDIR instruction.";
           replacementText = "WORKDIR";
           break;
+        case "R:FCURL":
+          actionTitle = "Add the -f option to the curl command.";
+          replacementText = "curl -f";
+          break;
         default:
           continue;
       }

@@ -15,6 +15,73 @@ export default function checkRepairableProblems(
   problems.push(...checkConsecutiveRunInstructions(dockerfile));
   problems.push(...checkUnsuitableInstructions(dockerfile));
   problems.push(...checkCdUsage(dockerfile));
+  problems.push(...checkNetworkUtils(dockerfile));
+
+  return problems;
+}
+
+function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const runInstructions = dockerfile
+    .getInstructions()
+    .filter((instruction) => instruction.getKeyword() === "RUN");
+
+  const curlInstructions = runInstructions.filter(
+    (instruction) =>
+      instruction
+        .getArguments()
+        .map((arg) => arg.getValue())
+        .find((argValue) => argValue === "curl") !== undefined
+  );
+
+  const wgetInstructions = runInstructions.filter(
+    (instruction) =>
+      instruction
+        .getArguments()
+        .map((arg) => arg.getValue())
+        .find((argValue) => argValue === "wget") !== undefined
+  );
+
+  curlInstructions.forEach((instruction) => {
+    const args = instruction.getArguments();
+
+    const curlArg = args.find((arg) => arg.getValue() === "curl");
+
+    if (curlArg === undefined) return;
+
+    const hasQuietFlag =
+      args.find((arg) => arg.getValue() === "-f") !== undefined;
+
+    if (!hasQuietFlag)
+      problems.push(
+        createRepairDiagnostic(
+          curlArg.getRange(),
+          "The -f option should be used with curl to avoid errors if the request fails.",
+          "FCURL"
+        )
+      );
+
+  });
+
+  wgetInstructions.concat(curlInstructions).forEach((instruction) => {
+    const args = instruction.getArguments();
+
+    const urlArg = args.find((arg) => arg.getValue().includes("http"));
+    
+    if (urlArg === undefined) return;
+    
+    const isHttps = urlArg.getValue().includes("https");
+
+    if (!isHttps)
+      problems.push(
+        createRepairDiagnostic(
+          urlArg.getRange(),
+          "HTTPS URLs should be used instead of HTTP URLs.",
+          "NOHTTPURL"
+        )
+      );
+  })
 
   return problems;
 }
@@ -35,8 +102,8 @@ function checkCdUsage(dockerfile: Dockerfile): Diagnostic[] {
 
     const range = {
       start: instruction.getRange().start,
-      end: args[0].getRange().end
-    }
+      end: args[0].getRange().end,
+    };
 
     problems.push(
       createRepairDiagnostic(
