@@ -31,18 +31,23 @@ export default class ConsecutiveRunRepair
     for (const diagnostic of context.diagnostics) {
       if (diagnostic.code !== "R:CONSECUTIVERUN") continue;
 
+      console.log(diagnostic.range);
+
       const instructionsText = document.getText(diagnostic.range);
       const secondRunKeywordPosition = instructionsText.lastIndexOf("RUN");
 
       const numberOfCharsForNewline = this.getNumberOfCharsForNewline();
+      const newlineChar = this.getNewline();
 
-      const replacementText =
+      const replacementText = (
         instructionsText.substring(
           0,
           secondRunKeywordPosition - numberOfCharsForNewline
         ) +
         " && " +
-        instructionsText.substring(secondRunKeywordPosition + 4);
+        instructionsText.substring(secondRunKeywordPosition + 4)
+      ).replace(newlineChar, "");
+      
       const action = createAction(
         "Merge consecutive RUN instructions.",
         replacementText,
@@ -53,6 +58,12 @@ export default class ConsecutiveRunRepair
     }
 
     return actions;
+  }
+
+  getNewline(): string {
+    const systemType = os.type();
+    if (systemType.includes("Windows")) return "\r\n";
+    return "\n";
   }
 
   getNumberOfCharsForNewline(): number {
