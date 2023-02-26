@@ -16,6 +16,50 @@ export default function checkRepairableProblems(
   problems.push(...checkUnsuitableInstructions(dockerfile));
   problems.push(...checkCdUsage(dockerfile));
   problems.push(...checkNetworkUtils(dockerfile));
+  problems.push(...checkApkProblems(dockerfile));
+
+  return problems;
+}
+
+function checkApkProblems(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const apkInstructions = dockerfile
+    .getInstructions()
+    .filter((instruction) => instruction.getKeyword() === "RUN")
+    .filter(
+      (instruction) =>
+        instruction
+          .getArguments()
+          .map((arg) => arg.getValue())
+          .find((argValue) => argValue === "apk") !== undefined
+    );
+
+  apkInstructions.forEach((instruction) => {
+    const args = instruction.getArguments();
+
+    const apkArg = args.find((arg) => arg.getValue() === "apk");
+    const addArg = args.find((arg) => arg.getValue() === "add");
+
+    if (addArg === undefined) return;
+
+    const hasCacheArg =
+      args.find((arg) => arg.getValue() === "--no-cache") !== undefined;
+
+    const range = {
+      start: apkArg.getRange().start,
+      end: addArg.getRange().end,
+    };
+
+    if (!hasCacheArg)
+      problems.push(
+        createRepairDiagnostic(
+          range,
+          "The --no-cache option should be used when installing packages with APK.",
+          "NOCACHE"
+        )
+      );
+  });
 
   return problems;
 }
@@ -27,13 +71,35 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
     .getInstructions()
     .filter((instruction) => instruction.getKeyword() === "RUN");
 
-  const curlInstructions = runInstructions.filter(
-    (instruction) =>
-      instruction
-        .getArguments()
-        .map((arg) => arg.getValue())
-        .find((argValue) => argValue === "curl") !== undefined
-  );
+  const curlInstructions = [];
+
+  runInstructions
+    .filter(
+      (instruction) =>
+        instruction
+          .getArguments()
+          .map((arg) => arg.getValue())
+          .find((argValue) => argValue === "curl") !== undefined
+    )
+    .forEach((instruction) => {
+      const instructionComponents = [instruction.getKeyword()].concat(
+        instruction.getArguments().map((arg) => arg.getValue())
+      );
+      for (let i = 1; i < instructionComponents.length; i++) {
+        const component = instructionComponents[i];
+        const previousComponent = instructionComponents[i - 1];
+
+        const currentComponentIsCurl = component === "curl";
+        const previousComponentIsAnd = previousComponent === "&&";
+        const previousComponentIsRun = previousComponent === "RUN";
+        const currentComponentIsNotArgOfAnotherCommand =
+          previousComponentIsAnd || previousComponentIsRun;
+
+        if (currentComponentIsCurl && !currentComponentIsNotArgOfAnotherCommand)
+          return;
+      }
+      curlInstructions.push(instruction);
+    });
 
   const wgetInstructions = runInstructions.filter(
     (instruction) =>
@@ -61,16 +127,15 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
           "FCURL"
         )
       );
-
   });
 
   wgetInstructions.concat(curlInstructions).forEach((instruction) => {
     const args = instruction.getArguments();
 
     const urlArg = args.find((arg) => arg.getValue().includes("http"));
-    
+
     if (urlArg === undefined) return;
-    
+
     const isHttps = urlArg.getValue().includes("https");
 
     if (!isHttps)
@@ -81,7 +146,7 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
           "NOHTTPURL"
         )
       );
-  })
+  });
 
   return problems;
 }
