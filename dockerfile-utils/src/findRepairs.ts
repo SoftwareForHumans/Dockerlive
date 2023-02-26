@@ -290,9 +290,30 @@ function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
     );
     if (missingElementProblems.length > 0)
       problems.push(...missingElementProblems);
+
+    const missingAptListRemoval = checkAtpListRemoval(instruction);
+    if (missingAptListRemoval !== undefined)
+      problems.push(missingAptListRemoval);
   });
 
   return problems;
+}
+
+function checkAtpListRemoval(instruction: Instruction): Diagnostic | undefined {
+  const args = instruction.getArguments();
+
+  const argString = args
+    .map((arg) => arg.getValue())
+    .join(" ")
+    .replace("  ", " ");
+
+  if (argString.includes("rm -rf /var/lib/apt/lists/*")) return;
+
+  return createRepairDiagnostic(
+    instruction.getRange(),
+    "The list of packages should be removed after performing an installation to reduce wasted space.",
+    "APTLIST"
+  );
 }
 
 function checkMissingElements(
