@@ -278,7 +278,10 @@ function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
 
   aptInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
-    const aptGetArg = args.find((arg) => arg.getValue() === "apt-get");
+    const aptGetArg = args.find(
+      (arg, index) =>
+        arg.getValue() === "apt-get" && args[index + 1].getValue() === "install"
+    );
     const installArg = args.find((arg) => arg.getValue() === "install");
 
     if (installArg === undefined) return; //goes to next iteration
