@@ -31,8 +31,6 @@ export default class ConsecutiveRunRepair
     for (const diagnostic of context.diagnostics) {
       if (diagnostic.code !== "R:CONSECUTIVERUN") continue;
 
-      console.log(diagnostic.range);
-
       const instructionsText = document.getText(diagnostic.range);
       const secondRunKeywordPosition = instructionsText.lastIndexOf("RUN");
 

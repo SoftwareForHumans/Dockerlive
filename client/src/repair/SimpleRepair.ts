@@ -27,11 +27,11 @@ export default class SimpleRepair implements CodeActionProvider<CodeAction> {
       switch (diagnostic.code) {
         case "R:NOINSTALLRECOMMENDS":
           actionTitle =
-            "Add --no-install-recommends option to apt-get install command.";
+            "Add --no-install-recommends option to the apt-get install command.";
           replacementText = "apt-get install --no-install-recommends";
           break;
         case "R:CONFIRMINSTALL":
-          actionTitle = "Add -y option to apt-get install command.";
+          actionTitle = "Add -y option to the apt-get install command.";
           replacementText = "apt-get install -y";
           break;
         case "R:UPDATEBEFOREINSTALL":
@@ -55,6 +55,10 @@ export default class SimpleRepair implements CodeActionProvider<CodeAction> {
         case "R:FCURL":
           actionTitle = "Add the -f option to the curl command.";
           replacementText = "curl -f";
+          break;
+        case "R:NOCACHE":
+          actionTitle = "Add the --no-cache option to apk add command.";
+          replacementText = "apk add --no-cache";
           break;
         default:
           continue;
