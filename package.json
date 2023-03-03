@@ -24,7 +24,8 @@
 	"activationEvents": [
 		"onLanguage:dockerfile",
 		"onCommand:dockerlive.showPerformance",
-		"onCommand:dockerlive.showFilesystem"
+		"onCommand:dockerlive.showFilesystem",
+		"onCommand:dockerlive.hermit"
 	],
 	"main": "./client/out/extension",
 	"contributes": {
@@ -70,6 +71,11 @@
 				"command": "dockerlive.openShell",
 				"category": "Dockerlive",
 				"title": "Open shell inside container"
+			},
+			{
+				"command": "dockerlive.hermit",
+				"category": "Dockerlive",
+				"title": "Generate a Dockerfile using Hermit"
 			}
 		],
 		"menus": {
@@ -93,8 +99,8 @@
 		}
 	},
 	"scripts": {
-		"compile": "concurrently \"tsc -p .\" \"tsc -p tsconfig.client.json\" \"tsc -p tsconfig.dockerfile-language-server-nodejs.json\" \"tsc -p tsconfig.dockerfile-language-service.json\" \"tsc -p tsconfig.dockerfile-utils.json\"",
-		"watch": "concurrently \"tsc -w -p .\" \"tsc -w -p tsconfig.client.json\" \"tsc -w -p tsconfig.dockerfile-language-server-nodejs.json\" \"tsc -w -p tsconfig.dockerfile-language-service.json\" \"tsc -w -p tsconfig.dockerfile-utils.json\"",
+		"compile": "concurrently \"tsc -p .\" \"tsc -p tsconfig.client.json\" \"tsc -p tsconfig.dockerfile-language-server-nodejs.json\" \"tsc -p tsconfig.dockerfile-language-service.json\" \"tsc -p tsconfig.dockerfile-utils.json\" \"tsc -p tsconfig.hermit.json\"",
+		"watch": "concurrently \"tsc -w -p .\" \"tsc -w -p tsconfig.client.json\" \"tsc -w -p tsconfig.dockerfile-language-server-nodejs.json\" \"tsc -w -p tsconfig.dockerfile-language-service.json\" \"tsc -w -p tsconfig.dockerfile-utils.json\" \"tsc -w -p tsconfig.hermit.json\"",
 		"deploy": "vsce publish --yarn",
 		"postinstall": "cd client && npm install"
 	},
@@ -102,8 +108,8 @@
 		"@types/mocha": "^5.2.7",
 		"@types/node": "^12.11.7",
 		"concurrently": "^5.1.0",
-		"typescript": "^3.6.4",
-		"vsce": "^1.74.0"
+		"typescript": "^4.2.3",
+		"chai": "^4.2.0"
 	},
 	"dependencies": {
 		"@types/tar-fs": "^1.16.2",
@@ -121,6 +127,13 @@
 		"vscode-languageserver": "^6.1.0",
 		"vscode-languageserver-protocol": "^3.15.1",
 		"vscode-languageserver-types": "^3.15.1",
-		"xml2js": "^0.4.23"
+		"xml2js": "^0.4.23",
+		"@types/figlet": "^1.2.1",
+		"b3-strace-parser": "^0.3.0",
+		"chalk": "^2.4.2",
+		"commander": "^2.20.3",
+		"figlet": "^1.5.0",
+		"tar-fs": "^2.0.1",
+		"winston": "^3.3.3"
 	}
 }

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./hermit/out"
+  },
+  "exclude": [
+    "./dockerfile-language-server-nodejs",
+		"./dockerfile-language-service",
+		"./dockerfile-utils",
+    "./client"
+  ]
+}
