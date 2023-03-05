@@ -99,17 +99,18 @@
 		}
 	},
 	"scripts": {
-		"compile": "concurrently \"tsc -p .\" \"tsc -p tsconfig.client.json\" \"tsc -p tsconfig.dockerfile-language-server-nodejs.json\" \"tsc -p tsconfig.dockerfile-language-service.json\" \"tsc -p tsconfig.dockerfile-utils.json\" \"tsc -p tsconfig.hermit.json\"",
-		"watch": "concurrently \"tsc -w -p .\" \"tsc -w -p tsconfig.client.json\" \"tsc -w -p tsconfig.dockerfile-language-server-nodejs.json\" \"tsc -w -p tsconfig.dockerfile-language-service.json\" \"tsc -w -p tsconfig.dockerfile-utils.json\" \"tsc -w -p tsconfig.hermit.json\"",
+		"compile": "concurrently \"tsc -p .\" \"tsc -p tsconfig.client.json\" \"tsc -p tsconfig.dockerfile-language-server-nodejs.json\" \"tsc -p tsconfig.dockerfile-language-service.json\" \"tsc -p tsconfig.dockerfile-utils.json\" && cp -r client/src/hermit/src/utils/res client/out/hermit/src/utils/",
+		"watch": "concurrently \"tsc -w -p .\" \"tsc -w -p tsconfig.client.json\" \"tsc -w -p tsconfig.dockerfile-language-server-nodejs.json\" \"tsc -w -p tsconfig.dockerfile-language-service.json\" \"tsc -w -p tsconfig.dockerfile-utils.json\" && cp -r client/src/hermit/src/utils/res client/out/hermit/src/utils/",
 		"deploy": "vsce publish --yarn",
 		"postinstall": "cd client && npm install"
 	},
 	"devDependencies": {
 		"@types/mocha": "^5.2.7",
 		"@types/node": "^12.11.7",
+		"chai": "^4.3.7",
 		"concurrently": "^5.1.0",
 		"typescript": "^4.2.3",
-		"chai": "^4.2.0"
+		"vsce": "^1.74.0"
 	},
 	"dependencies": {
 		"@types/tar-fs": "^1.16.2",
@@ -117,6 +118,7 @@
 		"@types/xml2js": "^0.4.5",
 		"dockerfile-ast": "0.0.20",
 		"dockerode": "^3.1.0",
+		"figlet": "^1.5.0",
 		"file-uri-to-path": "^2.0.0",
 		"parse-pairs": "^1.0.0",
 		"strip-ansi": "^6.0.0",
@@ -127,13 +129,8 @@
 		"vscode-languageserver": "^6.1.0",
 		"vscode-languageserver-protocol": "^3.15.1",
 		"vscode-languageserver-types": "^3.15.1",
+		"winston": "^3.3.3",
 		"xml2js": "^0.4.23",
-		"@types/figlet": "^1.2.1",
-		"b3-strace-parser": "^0.3.0",
-		"chalk": "^2.4.2",
-		"commander": "^2.20.3",
-		"figlet": "^1.5.0",
-		"tar-fs": "^2.0.1",
-		"winston": "^3.3.3"
+		"b3-strace-parser": "^0.3.0"
 	}
 }

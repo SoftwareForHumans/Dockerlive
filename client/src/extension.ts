@@ -15,7 +15,7 @@ import {
 import { PerformanceGraphs } from './performance';
 import { FilesystemVisualizer } from './filesystem';
 import { Analytics } from './analytics';
-import { dockerfileGeneration, defaultOptions } from '../../hermit/src/index';
+import { dockerfileGeneration } from './hermit/src';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -52,13 +52,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		analytics.sendEvent("toggleAnalysis");
 	});
 
-	vscode.commands.registerCommand('dockerlive.hermit', async () => {
-		console.log("IM HERE");
-		
-		await dockerfileGeneration("node index.js")
-
-		console.log("IM HERE2");
-	})
+	vscode.commands.registerCommand('dockerlive.hermit', () => {
+		dockerfileGeneration("node index.js");
+	});
 
 	let codeLensProvider = new DockerfileCodeLensProvider();
 

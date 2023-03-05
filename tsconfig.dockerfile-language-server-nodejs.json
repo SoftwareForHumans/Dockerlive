@@ -9,6 +9,5 @@
 		"./client",
 		"./dockerfile-language-service",
 		"./dockerfile-utils",
-		"./hermit"
 	]
 }

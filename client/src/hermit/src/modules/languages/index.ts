@@ -1,4 +1,4 @@
-let module: any = null;
+let langModule: any = null;
 
 import logger from '../../utils/logger';
 
@@ -11,18 +11,18 @@ const languages: Record<string, string> = {
 };
 
 const languageModule = async (extension: string) => {
-  if (module == null) {
+  if (langModule == null) {
     const modulePath: string = './' + languages[extension];
 
     try {
-      module = await import(modulePath);
+      langModule = await import(modulePath);
     }
     catch (e) {
       logger.error(`Hermit lacks support for language of extension ${extension}`);
     }
   }
 
-  return module;
+  return langModule;
 }
 
 export default languageModule;

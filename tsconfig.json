@@ -10,14 +10,12 @@
 		"dockerfile-language-server-nodejs",
 		"dockerfile-language-service",
 		"dockerfile-utils",
-		"client",
-		"hermit"
+		"client"
 	],
 	"exclude": [
 		"node_modules",
 		".vscode-test",
 		"client/node_modules",
-		"hermit/node_modules",
 		"dockerfile-language-server-nodejs/node_modules",
 		"dockerfile-language-service/node_modules",
 		"dockerfile-utils/node_modules"

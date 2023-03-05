@@ -8,6 +8,5 @@
 		"./client",
 		"./dockerfile-language-server-nodejs",
 		"./dockerfile-language-service",
-		"./hermit"
 	]	
 }
