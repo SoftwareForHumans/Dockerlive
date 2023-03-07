@@ -52,13 +52,22 @@ export async function activate(context: vscode.ExtensionContext) {
 		analytics.sendEvent("toggleAnalysis");
 	});
 
-	vscode.commands.registerCommand('dockerlive.hermit', () => {
+	vscode.commands.registerCommand('dockerlive.hermit', async () => {
 		const folders = vscode.workspace.workspaceFolders;
-		if (folders !== undefined) {
-			const dir = folders[0].uri.fsPath;
-			process.chdir(dir); 
-			dockerfileGeneration("node index.js");	
-		} 
+		if (folders === undefined) return;
+
+		await new Promise(r => setTimeout(r, 1000)); //workaround to avoid losing focus when the extension starts and the output panel steals focus
+
+		const command = await vscode.window.showInputBox({
+			prompt: "Enter the command used to start the service",
+			ignoreFocusOut: true,
+		})
+		if (command === undefined) return;
+
+		const dir = folders[0].uri.fsPath;
+		process.chdir(dir); 
+
+		dockerfileGeneration(command);	
 	});
 
 	let codeLensProvider = new DockerfileCodeLensProvider();
