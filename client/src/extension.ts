@@ -53,9 +53,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	vscode.commands.registerCommand('dockerlive.hermit', () => {
-		const dir = vscode.workspace.workspaceFolders[0].uri.fsPath;
-		process.chdir(dir); 
-		dockerfileGeneration("node index.js");
+		const folders = vscode.workspace.workspaceFolders;
+		if (folders !== undefined) {
+			const dir = folders[0].uri.fsPath;
+			process.chdir(dir); 
+			dockerfileGeneration("node index.js");	
+		} 
 	});
 
 	let codeLensProvider = new DockerfileCodeLensProvider();
