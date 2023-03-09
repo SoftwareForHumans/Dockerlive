@@ -9,21 +9,37 @@ import HermitOptions from '../utils/lib/HermitOptions'
 import { readDebianPackages, readLanguagePackages } from '../utils/fileSystem';
 import logger from '../utils/logger';
 
+const PROBLEMATIC_LIBRARIES = ["/lib/x86_64-linux-gnu/libbrotlidec.so.1"];
+
 const getPackageName = (library: string) => {
   try {
-    const packageName: string = execSync(`dpkg -S ${library}`, { stdio: 'pipe', encoding: 'utf-8' }).split(':')[0];
+    console.log("NON READLINK");
+    console.log(library);
+
+    if (PROBLEMATIC_LIBRARIES.includes(library)) return null;
+
+    const result = execSync(`dpkg -S ${library}`, { stdio: 'pipe', encoding: 'utf-8' });
+    
+    const packageName: string = result.split(':')[0];
 
     return packageName;
   }
   catch (e) { }
 
   try {
-    const packageName: string = execSync(`dpkg -S "$(readlink -f ${library})"`, { stdio: 'pipe', encoding: 'utf-8' }).split(':')[0];
+    console.log("READLINK")
+    console.log(library);
+
+    if (PROBLEMATIC_LIBRARIES.includes(library)) return null;
+
+    const result = execSync(`dpkg -S "$(readlink -m ${library})"`, { stdio: 'pipe', encoding: 'utf-8' });
+
+    const packageName: string = result.split(':')[0];
 
     return packageName;
   }
   catch (e2) { }
-
+  
   return null;
 }
 
