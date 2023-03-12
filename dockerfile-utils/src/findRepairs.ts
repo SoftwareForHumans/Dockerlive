@@ -17,6 +17,28 @@ export default function checkRepairableProblems(
   problems.push(...checkCdUsage(dockerfile));
   problems.push(...checkNetworkUtils(dockerfile));
   problems.push(...checkApkProblems(dockerfile));
+  problems.push(...checkVersionPinning(dockerfile));
+
+  return problems;
+}
+
+function checkVersionPinning(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const froms = dockerfile.getFROMs();
+
+  froms.forEach((from) => {
+    const tag = from.getImageTag();
+
+    if (tag === null)
+      problems.push(
+        createRepairDiagnostic(
+          from.getRange(),
+          "The version of the base image should be pinned to improve stability, speed and security.",
+          "NOIMAGEPIN"
+        )
+      );
+  });
 
   return problems;
 }

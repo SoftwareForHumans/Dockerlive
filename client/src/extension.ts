@@ -21,6 +21,7 @@ import { CodeAction } from "vscode";
 import SimpleRepair from "./repair/SimpleRepair";
 import ConsecutiveRunRepair from "./repair/ConsecutiveRunRepair";
 import AptListRepair from './repair/AptListRepair';
+import VersionPinRepair from './repair/VersionPinRepair';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -75,6 +76,13 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
       new AptListRepair()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: "dockerfile", scheme: "file" },
+      new VersionPinRepair()
     )
   );
 
