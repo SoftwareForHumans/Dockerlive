@@ -18,6 +18,24 @@ export default function checkRepairableProblems(
   problems.push(...checkNetworkUtils(dockerfile));
   problems.push(...checkApkProblems(dockerfile));
   problems.push(...checkVersionPinning(dockerfile));
+  problems.push(...checkCopys(dockerfile));
+
+  return problems;
+}
+
+function checkCopys(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const copys = dockerfile.getCOPYs();
+
+  if (copys.length === 1)
+    problems.push(
+      createRepairDiagnostic(
+        copys[0].getRange(),
+        "Two COPY instructions should be used, one to copy the files required for installing dependencies and another to copy the rest of the source code files.",
+        "SINGLECOPY"
+      )
+    );
 
   return problems;
 }
