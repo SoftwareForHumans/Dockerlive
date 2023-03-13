@@ -19,6 +19,33 @@ export default function checkRepairableProblems(
   problems.push(...checkApkProblems(dockerfile));
   problems.push(...checkVersionPinning(dockerfile));
   problems.push(...checkCopys(dockerfile));
+  problems.push(...checkWorkDir(dockerfile));
+
+  return problems;
+}
+
+function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const workdirInstructions = dockerfile
+    .getInstructions()
+    .filter((instruction) => instruction.getKeyword() === "WORKDIR");
+
+  const fromLine = dockerfile.getFROMs()[0].getRange().start.line;
+
+  const range = {
+    start: { character: 0, line: fromLine + 1 },
+    end: { character: 3, line: fromLine + 1 },
+  };
+
+  if (workdirInstructions.length === 0)
+    problems.push(
+      createRepairDiagnostic(
+        range,
+        "A working directory other than / should be used.",
+        "NOROOTDIR"
+      )
+    );
 
   return problems;
 }
