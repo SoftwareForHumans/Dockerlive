@@ -2,20 +2,12 @@ import {
   CancellationToken,
   CodeAction,
   CodeActionContext,
-  CodeActionKind,
   CodeActionProvider,
-  Command,
-  Position,
-  ProviderResult,
   Range,
   Selection,
   TextDocument,
-  Uri,
-  WorkspaceEdit,
 } from "vscode";
-import * as vscode from "vscode";
-import { createAction } from "./common";
-import * as os from "os";
+import { createAction, getNewline, getNumberOfCharsForNewline } from "./common";
 
 export default class ConsecutiveRunRepair
   implements CodeActionProvider<CodeAction>
@@ -34,8 +26,8 @@ export default class ConsecutiveRunRepair
       const instructionsText = document.getText(diagnostic.range);
       const secondRunKeywordPosition = instructionsText.lastIndexOf("RUN");
 
-      const numberOfCharsForNewline = this.getNumberOfCharsForNewline();
-      const newlineChar = this.getNewline();
+      const numberOfCharsForNewline = getNumberOfCharsForNewline();
+      const newlineChar = getNewline();
 
       const replacementText = (
         instructionsText.substring(
@@ -56,17 +48,5 @@ export default class ConsecutiveRunRepair
     }
 
     return actions;
-  }
-
-  getNewline(): string {
-    const systemType = os.type();
-    if (systemType.includes("Windows")) return "\r\n";
-    return "\n";
-  }
-
-  getNumberOfCharsForNewline(): number {
-    const systemType = os.type();
-    if (systemType.includes("Windows")) return 2;
-    return 1;
   }
 }

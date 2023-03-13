@@ -2,20 +2,12 @@ import {
   CancellationToken,
   CodeAction,
   CodeActionContext,
-  CodeActionKind,
   CodeActionProvider,
-  Command,
-  Position,
-  ProviderResult,
   Range,
   Selection,
   TextDocument,
-  Uri,
-  WorkspaceEdit,
 } from "vscode";
-import * as vscode from "vscode";
-import { createAction } from "./common";
-import * as os from "os";
+import { createAction, isNodeProject } from "./common";
 
 export default class VersionPinRepair
   implements CodeActionProvider<CodeAction>
@@ -31,7 +23,7 @@ export default class VersionPinRepair
     for (const diagnostic of context.diagnostics) {
       if (diagnostic.code !== "R:NOIMAGEPIN") continue;
 
-		const replacementText = getReplacementText(document);
+      const replacementText = getReplacementText(document);
 
       const action = createAction(
         "Pin image version.",
@@ -48,11 +40,7 @@ export default class VersionPinRepair
 }
 
 function getReplacementText(document: TextDocument): string {
-	const documentText = document.getText();
-	const fromIndex = documentText.indexOf("FROM");
-	const imageIndex = fromIndex + "FROM ".length;
-	const image = documentText.substring(imageIndex, imageIndex + "python".length);
-	const isNode = image.startsWith("node");
-	if (isNode) return "FROM node:18-slim";
-	return "FROM python:3.11-slim";
+  const isNode = isNodeProject(document);
+  if (isNode) return "FROM node:18-slim";
+  return "FROM python:3.11-slim";
 }
