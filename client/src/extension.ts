@@ -23,6 +23,7 @@ import ConsecutiveRunRepair from "./repair/ConsecutiveRunRepair";
 import AptListRepair from './repair/AptListRepair';
 import VersionPinRepair from './repair/VersionPinRepair';
 import SingleCopyRepair from './repair/SingleCopyRepair';
+import WorkDirRepair from './repair/WorkDirRepair';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -91,6 +92,13 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
       new SingleCopyRepair()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: "dockerfile", scheme: "file" },
+      new WorkDirRepair()
     )
   );
 
