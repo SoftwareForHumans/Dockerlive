@@ -23,7 +23,7 @@ export default class WorkDirRepair implements CodeActionProvider<CodeAction> {
 
       const newlineChar = getNewline();
 
-      const replacementText = newlineChar + "WORKDIR /path/to/workdir" + newlineChar;
+      const replacementText = newlineChar + "WORKDIR /app" + newlineChar;
 
       const firstCharacterOfLinePosition = diagnostic.range.start;
 
