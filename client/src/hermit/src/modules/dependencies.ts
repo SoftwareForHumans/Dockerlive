@@ -8,6 +8,7 @@ import HermitOptions from '../utils/lib/HermitOptions'
 
 import { readDebianPackages, readLanguagePackages } from '../utils/fileSystem';
 import logger from '../utils/logger';
+import { getImageInstalledPackages } from '../utils/containers';
 
 const PROBLEMATIC_LIBRARIES = ["/lib/x86_64-linux-gnu/libbrotlidec.so.1"];
 
@@ -50,13 +51,14 @@ const isLibrary = (fileName: string) => {
   return fileName.split('.').includes('so') && !fileName.includes('python');
 }
 
-const filterPackages = (packagesList: Array<string>, pathsList: Array<string>, languageData: any): DependenciesData => {
+const filterPackages = async (packagesList: Array<string>, pathsList: Array<string>, languageData: any, imageData: string[]): Promise<DependenciesData> => {
   const { languagePackages } = languageData;
 
   const installablePackages: Array<string> = new Array<string>();
   const filteredPackages: Array<string> = new Array<string>();
   const librariesPath: Array<string> = new Array<string>();
 
+  const imagePreinstalledPackages = await getImageInstalledPackages(imageData[0]);
   const debianPackages: Array<string> = readDebianPackages();
   const languagepackages: Array<string> = readLanguagePackages(languageData.PACKAGES_LIST);
 
@@ -78,7 +80,7 @@ const filterPackages = (packagesList: Array<string>, pathsList: Array<string>, l
   }
 
   installablePackages.forEach((dep) => {
-    if (!languagepackages.includes(dep)) {
+    if (!languagepackages.includes(dep) && !imagePreinstalledPackages.includes(dep)) {
       filteredPackages.push(dep);
     }
   });
@@ -89,7 +91,7 @@ const filterPackages = (packagesList: Array<string>, pathsList: Array<string>, l
   };
 }
 
-const dependenciesModule = (_inspectedData: SourceInfo, tracedData: SystemInfo, languageData: any, _options: HermitOptions) => {
+const dependenciesModule = async (_inspectedData: SourceInfo, tracedData: SystemInfo, languageData: any, _options: HermitOptions, imageData: string[]) => {
   const syscalls: Array<Syscall> = tracedData.openat;
   const installationSteps: Array<string> = languageData.languageDependenciesInstallation;
 
@@ -121,7 +123,7 @@ const dependenciesModule = (_inspectedData: SourceInfo, tracedData: SystemInfo, 
 
   return {
     languagueDependencies: installationSteps,
-    systemDependencies: filterPackages(systemDependencies, pathsList, languageData)
+    systemDependencies: await filterPackages(systemDependencies, pathsList, languageData, imageData)
   }
 }
 

@@ -37,7 +37,7 @@ export const dockerfileGeneration = async (command: string, suppliedOptions: any
 
   // Modules to infer dockerfiles fields
   const imageData = imageModule(inspectedData, tracedData, languageData, options);
-  const dependenciesData = dependenciesModule(inspectedData, tracedData, languageData, options);
+  const dependenciesData = await dependenciesModule(inspectedData, tracedData, languageData, options, imageData);
   const portsData = portsModule(inspectedData, tracedData, languageData, options);
   const entrypointData = entrypointModule(inspectedData, tracedData, languageData, options);
 
