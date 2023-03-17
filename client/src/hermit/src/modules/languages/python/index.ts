@@ -4,7 +4,7 @@ import { existsRequirements, existsPipfile, readPipfile } from '../../../utils/f
 const LOCAL_SITE_PACKAGES = "local-site-packages";
 
 export const languageImages = [
-  "python:3.8-slim",
+  "python:3.11-slim",
   "gcr.io/distroless/python3"
 ];
 

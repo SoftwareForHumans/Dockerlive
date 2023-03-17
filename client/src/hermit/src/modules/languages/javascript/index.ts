@@ -3,7 +3,7 @@ import HermitOptions from '../../../utils/lib/HermitOptions';
 import logger from '../../../utils/logger';
 
 export const languageImages = [
-  "node:14",
+  "node:18-slim",
   "gcr.io/distroless/nodejs:14"
 ];
 
