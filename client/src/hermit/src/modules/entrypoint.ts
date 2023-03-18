@@ -49,7 +49,7 @@ const entrypointModule = (inspectedData: SourceInfo, tracedData: SystemInfo, lan
         for (let i = 0; i < argsArray.length; i++) {
           let arg: string = argsArray[i];
 
-          if (arg.includes(currentPath)) {
+          if (arg.includes(currentPath) && currentPath !== ".") {
             argsArray[i] = `.${arg.replace(currentPath, "")}`;
           }
         };
