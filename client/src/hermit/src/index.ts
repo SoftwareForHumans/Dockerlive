@@ -14,7 +14,7 @@ import HermitOptions from './utils/lib/HermitOptions';
 export const defaultOptions: HermitOptions = {
   multiStage: false,
   timeout: 60,
-  path: process.env.PWD || '.',
+  path: '.',
   container: false
 };
 
