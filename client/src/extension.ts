@@ -67,7 +67,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		const dir = folders[0].uri.fsPath;
 		process.chdir(dir); 
 
-		dockerfileGeneration(command);	
+		await dockerfileGeneration(command);
+		dockerfileGeneration(command, {container: true});
 	});
 
 	let codeLensProvider = new DockerfileCodeLensProvider();
