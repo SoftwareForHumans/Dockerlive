@@ -13,7 +13,7 @@ import HermitOptions from './utils/lib/HermitOptions';
 // Default Options
 export const defaultOptions: HermitOptions = {
   multiStage: false,
-  timeout: 60,
+  timeout: 10,
   path: '.',
   container: false
 };
