@@ -24,7 +24,8 @@
 	"activationEvents": [
 		"onLanguage:dockerfile",
 		"onCommand:dockerlive.showPerformance",
-		"onCommand:dockerlive.showFilesystem"
+		"onCommand:dockerlive.showFilesystem",
+		"onCommand:dockerlive.generateWithHermit"
 	],
 	"main": "./client/out/extension",
 	"contributes": {
@@ -70,6 +71,11 @@
 				"command": "dockerlive.openShell",
 				"category": "Dockerlive",
 				"title": "Open shell inside container"
+			},
+			{
+				"command": "dockerlive.generateWithHermit",
+				"category": "Dockerlive",
+				"title": "Generate a Dockerfile using Hermit"
 			}
 		],
 		"menus": {

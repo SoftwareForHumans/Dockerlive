@@ -15,6 +15,7 @@ import {
 import { PerformanceGraphs } from './performance';
 import { FilesystemVisualizer } from './filesystem';
 import { Analytics } from './analytics';
+import { exec, execSync } from 'child_process';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -50,6 +51,25 @@ export async function activate(context: vscode.ExtensionContext) {
 		client.sendNotification("dockerlive/toggle");
 		analytics.sendEvent("toggleAnalysis");
 	});
+
+	vscode.commands.registerCommand('dockerlive.generateWithHermit', async () => {
+		const folders = vscode.workspace.workspaceFolders;
+		if (folders === undefined) return;
+
+		await new Promise(r => setTimeout(r, 1000)); //workaround to avoid losing focus when the extension starts and the output panel steals focus
+
+		const command = await vscode.window.showInputBox({
+			prompt: "Enter the command used to start the service",
+			ignoreFocusOut: true,
+		})
+		if (command === undefined) return;
+
+		const dir = folders[0].uri.fsPath;
+		process.chdir(dir); 
+
+		execSync(`hermit "${command}"`);
+		exec(`hermit -c -t 5`);
+	})
 
 	let codeLensProvider = new DockerfileCodeLensProvider();
 
