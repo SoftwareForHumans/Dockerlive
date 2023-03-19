@@ -19,7 +19,11 @@ const getPackageName = (library: string) => {
 
     if (PROBLEMATIC_LIBRARIES.includes(library)) return null;
 
+    console.log("ABOUT TO EXEC");
+    
     const result = execSync(`dpkg -S ${library}`, { stdio: 'pipe', encoding: 'utf-8' });
+
+    console.log("AFTER EXEC");
     
     const packageName: string = result.split(':')[0];
 
@@ -32,8 +36,12 @@ const getPackageName = (library: string) => {
     console.log(library);
 
     if (PROBLEMATIC_LIBRARIES.includes(library)) return null;
+    
+    console.log("ABOUT TO EXEC");
 
     const result = execSync(`dpkg -S "$(readlink -m ${library})"`, { stdio: 'pipe', encoding: 'utf-8' });
+
+    console.log("AFTER EXEC");
 
     const packageName: string = result.split(':')[0];
 
