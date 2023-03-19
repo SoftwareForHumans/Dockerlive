@@ -6,6 +6,7 @@ import Syscall from "./lib/Syscall";
 import logger from "./logger";
 import { getNodeMajorVersion } from "typescript";
 import { Writable } from "stream";
+import * as path from "path";
 
 const docker = new Docker();
 
@@ -109,7 +110,7 @@ export const createContainer = (
     docker.createContainer(
       {
         Image: imageId,
-        HostConfig: { Binds: [`${options.path}:${workdir}`] },
+        HostConfig: { Binds: [`${path.resolve(options.path)}:${workdir}`] },
         Cmd: cmd == "" ? undefined : cmd.split(" "),
       },
       (error, container) => {
