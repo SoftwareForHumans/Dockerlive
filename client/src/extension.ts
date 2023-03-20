@@ -15,7 +15,8 @@ import {
 import { PerformanceGraphs } from './performance';
 import { FilesystemVisualizer } from './filesystem';
 import { Analytics } from './analytics';
-import { exec, execSync } from 'child_process';
+import { execSync } from 'child_process';
+import { renameSync, rmdirSync, unlinkSync } from 'fs';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -68,7 +69,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		process.chdir(dir); 
 
 		execSync(`hermit "${command}"`);
-		exec(`hermit -c -t 5`);
+		execSync(`hermit -c -t 5`);
+
+		["Dockerfile", "Dockerfile.strace", "syscall.log", "tmp/syscall.log"].forEach((file) => {
+			unlinkSync(file);
+		})
+
+		rmdirSync("tmp");
+		renameSync("Dockerfile.hermit", "Dockerfile");
+
+		vscode.window.showInformationMessage("Dockerfile generation has been completed!");
 	})
 
 	let codeLensProvider = new DockerfileCodeLensProvider();
