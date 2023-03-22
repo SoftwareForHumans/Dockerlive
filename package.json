@@ -58,6 +58,15 @@
 				}
 			},
 			{
+				"command": "dockerlive.generateAlternativeWithHermit",
+				"category": "Dockerlive",
+				"title": "Generate an alternative Dockerfile using Hermit",
+				"icon": {
+					"light": "./resources/icons/hermit/hermit-crab.png",
+					"dark": "./resources/icons/hermit/hermit-crab.png"
+				}
+			},
+			{
 				"command": "dockerlive.stop",
 				"category": "Dockerlive",
 				"title": "Stop the test container and dynamic analysis"
@@ -93,6 +102,11 @@
 				{
 					"when": "resourceLangId == dockerfile",
 					"command": "dockerlive.toggle",
+					"group": "navigation"
+				},
+				{
+					"when": "resourceLangId == dockerfile",
+					"command": "dockerlive.generateAlternativeWithHermit",
 					"group": "navigation"
 				}
 			]

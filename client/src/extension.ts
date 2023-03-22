@@ -25,6 +25,8 @@ let filesystemCurrentPanel: vscode.WebviewPanel | undefined;
 let initialData: any;
 let currentDocumentUri: string;
 
+const HERMIT_DYNAMIC_ANALYSIS_DURATION = 5;
+
 export async function activate(context: vscode.ExtensionContext) {
   let dockerlive = vscode.extensions.getExtension("david-reis.dockerlive");
 
@@ -61,8 +63,7 @@ export async function activate(context: vscode.ExtensionContext) {
         cancellable: false,
       },
       async (progress, _token) => {
-        const folders = vscode.workspace.workspaceFolders;
-        if (folders === undefined) return;
+        const cwd = getWorkDir();
 
         await new Promise((r) => setTimeout(r, 1000)); //workaround to avoid losing focus when the extension starts and the output panel steals focus
 
@@ -70,38 +71,26 @@ export async function activate(context: vscode.ExtensionContext) {
           prompt: "Enter the command used to start the service",
           ignoreFocusOut: true,
         });
-        if (command === undefined) return;
 
-        const dir = folders[0].uri.fsPath;
-        process.chdir(dir);
+        if (command === undefined) return;
 
         progress.report({
           increment: 0,
           message: "Generating initial Dockerfile...",
         });
 
-        execSync(`hermit "${command}"`);
+        execSync(`hermit "${command}"`, { cwd });
 
         progress.report({ increment: 50, message: "Analyzing container..." });
 
-        execSync(`hermit -c -t 5`);
+        execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd });
 
-        [
-          "Dockerfile",
-          "Dockerfile.strace",
-          "syscall.log",
-          "tmp/syscall.log",
-        ].forEach((file) => {
-          unlinkSync(file);
-        });
+        hermitGenerationCleanup(true);
 
         progress.report({
           increment: 50,
           message: "Finishing generation and performing cleanup...",
         });
-
-        rmdirSync("tmp");
-        renameSync("Dockerfile.hermit", "Dockerfile");
 
         return new Promise<void>((resolve) => {
           resolve();
@@ -112,6 +101,43 @@ export async function activate(context: vscode.ExtensionContext) {
       }
     );
   });
+
+  vscode.commands.registerCommand(
+    "dockerlive.generateAlternativeWithHermit",
+    () => {
+      vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Generating Dockerfile",
+          cancellable: false,
+        },
+        (progress, _token) => {
+          progress.report({
+            increment: 0,
+            message: "Performing analysis...",
+          });
+
+          const cwd = getWorkDir();
+
+          execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd });
+
+          progress.report({
+            increment: 100,
+            message: "Finishing generation and performing cleanup...",
+          });
+
+          hermitGenerationCleanup(false);
+
+          return new Promise<void>((resolve) => {
+            resolve();
+            vscode.window.showInformationMessage(
+              "Dockerfile generation has been completed!"
+            );
+          });
+        }
+      );
+    }
+  );
 
   let codeLensProvider = new DockerfileCodeLensProvider();
 
@@ -168,6 +194,30 @@ export async function activate(context: vscode.ExtensionContext) {
       currentDocumentUri = editor.document.uri.toString();
     }
   });
+}
+
+function hermitGenerationCleanup(generatedFromScratch: boolean) {
+  const dir = getWorkDir();
+
+  ["Dockerfile.strace", "syscall.log"].forEach((file) =>
+    unlinkSync(dir + "/" + file)
+  );
+
+  if (generatedFromScratch) {
+    ["Dockerfile", "tmp/syscall.log"].forEach((file) =>
+      unlinkSync(dir + "/" + file)
+    );
+    rmdirSync(dir + "/tmp");
+    renameSync(dir + "/Dockerfile.hermit", dir + "/Dockerfile");
+  }
+}
+
+function getWorkDir(): string {
+  const folders = vscode.workspace.workspaceFolders;
+
+  if (folders === undefined) return "";
+
+  return folders[0].uri.fsPath;
 }
 
 function sendPartitionedFilesystemData(data) {
