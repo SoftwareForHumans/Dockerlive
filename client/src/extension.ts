@@ -20,10 +20,12 @@ import { Analytics } from "./analytics";
 import { CodeAction } from "vscode";
 import SimpleRepair from "./repair/SimpleRepair";
 import ConsecutiveRunRepair from "./repair/ConsecutiveRunRepair";
-import AptListRepair from './repair/AptListRepair';
-import VersionPinRepair from './repair/VersionPinRepair';
-import SingleCopyRepair from './repair/SingleCopyRepair';
-import WorkDirRepair from './repair/WorkDirRepair';
+import AptListRepair from "./repair/AptListRepair";
+import VersionPinRepair from "./repair/VersionPinRepair";
+import SingleCopyRepair from "./repair/SingleCopyRepair";
+import WorkDirRepair from "./repair/WorkDirRepair";
+import { execSync } from "child_process";
+import { renameSync, rmdirSync, unlinkSync } from "fs";
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -31,6 +33,8 @@ let performanceCurrentPanel: vscode.WebviewPanel | undefined;
 let filesystemCurrentPanel: vscode.WebviewPanel | undefined;
 let initialData: any;
 let currentDocumentUri: string;
+
+const HERMIT_DYNAMIC_ANALYSIS_DURATION = 5;
 
 export async function activate(context: vscode.ExtensionContext) {
   let dockerlive = vscode.extensions.getExtension("david-reis.dockerlive");
@@ -102,6 +106,90 @@ export async function activate(context: vscode.ExtensionContext) {
     )
   );
 
+  vscode.commands.registerCommand("dockerlive.generateWithHermit", async () => {
+    vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: "Generating Dockerfile",
+        cancellable: false,
+      },
+      async (progress, _token) => {
+        const cwd = getWorkDir();
+
+        await new Promise((r) => setTimeout(r, 1000)); //workaround to avoid losing focus when the extension starts and the output panel steals focus
+
+        const command = await vscode.window.showInputBox({
+          prompt: "Enter the command used to start the service",
+          ignoreFocusOut: true,
+        });
+
+        if (command === undefined) return;
+
+        progress.report({
+          increment: 0,
+          message: "Generating initial Dockerfile...",
+        });
+
+        execSync(`hermit "${command}"`, { cwd });
+
+        progress.report({ increment: 50, message: "Analyzing container..." });
+
+        execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd });
+
+        hermitGenerationCleanup(true);
+
+        progress.report({
+          increment: 50,
+          message: "Finishing generation and performing cleanup...",
+        });
+
+        return new Promise<void>((resolve) => {
+          resolve();
+          vscode.window.showInformationMessage(
+            "Dockerfile generation has been completed!"
+          );
+        });
+      }
+    );
+  });
+
+  vscode.commands.registerCommand(
+    "dockerlive.generateAlternativeWithHermit",
+    () => {
+      vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Generating Dockerfile",
+          cancellable: false,
+        },
+        (progress, _token) => {
+          progress.report({
+            increment: 0,
+            message: "Performing analysis...",
+          });
+
+          const cwd = getWorkDir();
+
+          execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd });
+
+          progress.report({
+            increment: 100,
+            message: "Finishing generation and performing cleanup...",
+          });
+
+          hermitGenerationCleanup(false);
+
+          return new Promise<void>((resolve) => {
+            resolve();
+            vscode.window.showInformationMessage(
+              "Dockerfile generation has been completed!"
+            );
+          });
+        }
+      );
+    }
+  );
+
   let codeLensProvider = new DockerfileCodeLensProvider();
 
   initializePerformanceWebview(context, pGraphs);
@@ -157,6 +245,30 @@ export async function activate(context: vscode.ExtensionContext) {
       currentDocumentUri = editor.document.uri.toString();
     }
   });
+}
+
+function hermitGenerationCleanup(generatedFromScratch: boolean) {
+  const dir = getWorkDir();
+
+  ["Dockerfile.strace", "syscall.log"].forEach((file) =>
+    unlinkSync(dir + "/" + file)
+  );
+
+  if (generatedFromScratch) {
+    ["Dockerfile", "tmp/syscall.log"].forEach((file) =>
+      unlinkSync(dir + "/" + file)
+    );
+    rmdirSync(dir + "/tmp");
+    renameSync(dir + "/Dockerfile.hermit", dir + "/Dockerfile");
+  }
+}
+
+function getWorkDir(): string {
+  const folders = vscode.workspace.workspaceFolders;
+
+  if (folders === undefined) return "";
+
+  return folders[0].uri.fsPath;
 }
 
 function sendPartitionedFilesystemData(data) {

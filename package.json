@@ -24,7 +24,8 @@
 	"activationEvents": [
 		"onLanguage:dockerfile",
 		"onCommand:dockerlive.showPerformance",
-		"onCommand:dockerlive.showFilesystem"
+		"onCommand:dockerlive.showFilesystem",
+		"onCommand:dockerlive.generateWithHermit"
 	],
 	"main": "./client/out/extension",
 	"contributes": {
@@ -57,6 +58,15 @@
 				}
 			},
 			{
+				"command": "dockerlive.generateAlternativeWithHermit",
+				"category": "Dockerlive",
+				"title": "Generate an alternative Dockerfile using Hermit",
+				"icon": {
+					"light": "./resources/icons/hermit/hermit-crab.png",
+					"dark": "./resources/icons/hermit/hermit-crab.png"
+				}
+			},
+			{
 				"command": "dockerlive.stop",
 				"category": "Dockerlive",
 				"title": "Stop the test container and dynamic analysis"
@@ -70,6 +80,11 @@
 				"command": "dockerlive.openShell",
 				"category": "Dockerlive",
 				"title": "Open shell inside container"
+			},
+			{
+				"command": "dockerlive.generateWithHermit",
+				"category": "Dockerlive",
+				"title": "Generate a Dockerfile using Hermit"
 			}
 		],
 		"menus": {
@@ -87,6 +102,11 @@
 				{
 					"when": "resourceLangId == dockerfile",
 					"command": "dockerlive.toggle",
+					"group": "navigation"
+				},
+				{
+					"when": "resourceLangId == dockerfile",
+					"command": "dockerlive.generateAlternativeWithHermit",
 					"group": "navigation"
 				}
 			]
