@@ -1,8 +1,13 @@
-import { Argument, Dockerfile, Instruction } from "dockerfile-ast";
+import {
+  Argument,
+  Dockerfile,
+  DockerfileParser,
+  Instruction,
+} from "dockerfile-ast";
+import { existsSync, readFileSync } from "fs";
 import {
   Diagnostic,
   Range,
-  Position,
   DiagnosticSeverity,
 } from "vscode-languageserver-types";
 
@@ -20,8 +25,82 @@ export default function checkRepairableProblems(
   problems.push(...checkVersionPinning(dockerfile));
   problems.push(...checkCopys(dockerfile));
   problems.push(...checkWorkDir(dockerfile));
+  problems.push(...checkHermitAlternative(dockerfile));
 
   return problems;
+}
+
+function checkHermitAlternative(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const hermitDockerfilePath = "Dockerfile.hermit";
+
+  const hermitDockerfileExists = existsSync(hermitDockerfilePath);
+
+  if (!hermitDockerfileExists) return [];
+
+  const hermitDockerfileContent = readFileSync(hermitDockerfilePath).toString();
+
+  const hermitDockerfile = DockerfileParser.parse(hermitDockerfileContent);
+
+  const distro = getDistroUsed(dockerfile);
+
+  if (distro !== "") {
+    const packageManagerKeyword = distro === "debian" ? "apt-get" : "apk";
+
+    const hermitPkgInstructions = hermitDockerfile
+      .getInstructions()
+      .filter((instruction) =>
+        instruction
+          .getArguments()
+          .map((arg) => arg.getValue())
+          .includes(packageManagerKeyword)
+      );
+
+    const originalPkgInstructions = dockerfile
+      .getInstructions()
+      .filter((instruction) =>
+        instruction
+          .getArguments()
+          .map((arg) => arg.getValue())
+          .includes(packageManagerKeyword)
+      );
+
+    const range = getRangeAfterFrom(dockerfile);
+
+    if (
+      hermitPkgInstructions.length > 0 &&
+      originalPkgInstructions.length === 0
+    )
+      problems.push(
+        createRepairDiagnostic(
+          range,
+          "Hermit detected some dependencies that are missing from this Dockerfile.",
+          "HERMITDEPS"
+        )
+      );
+  }
+
+  return problems;
+}
+
+function getDistroUsed(dockerfile: Dockerfile): string {
+  const imageTag = dockerfile.getFROMs()[0].getImageTag();
+
+  const hasAlpineInImageTag = imageTag !== null && imageTag.includes("alpine");
+
+  if (hasAlpineInImageTag) return "alpine";
+
+  const apkMentions = dockerfile.getInstructions().filter((instruction) =>
+    instruction
+      .getArguments()
+      .map((arg) => arg.getValue())
+      .includes("apk")
+  );
+
+  if (apkMentions.length > 0) return "alpine";
+
+  return "debian";
 }
 
 function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
@@ -31,12 +110,7 @@ function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
     .getInstructions()
     .filter((instruction) => instruction.getKeyword() === "WORKDIR");
 
-  const fromLine = dockerfile.getFROMs()[0].getRange().start.line;
-
-  const range = {
-    start: { character: 0, line: fromLine + 1 },
-    end: { character: 3, line: fromLine + 1 },
-  };
+  const range = getRangeAfterFrom(dockerfile);
 
   if (workdirInstructions.length === 0)
     problems.push(
@@ -48,6 +122,17 @@ function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
     );
 
   return problems;
+}
+
+function getRangeAfterFrom(dockerfile: Dockerfile): Range {
+  const fromLine = dockerfile.getFROMs()[0].getRange().start.line;
+
+  const range = {
+    start: { character: 0, line: fromLine + 1 },
+    end: { character: 3, line: fromLine + 1 },
+  };
+
+  return range;
 }
 
 function checkCopys(dockerfile: Dockerfile): Diagnostic[] {
@@ -392,6 +477,8 @@ function checkMissingElements(
   args: Argument[]
 ): Diagnostic[] {
   const problems: Diagnostic[] = [];
+
+  if (aptGetArg === undefined) return [];
 
   const range: Range = {
     start: aptGetArg.getRange().start,
