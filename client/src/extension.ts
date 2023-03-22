@@ -25,7 +25,7 @@ import VersionPinRepair from "./repair/VersionPinRepair";
 import SingleCopyRepair from "./repair/SingleCopyRepair";
 import WorkDirRepair from "./repair/WorkDirRepair";
 import { execSync } from "child_process";
-import { renameSync, rmdirSync, unlinkSync } from "fs";
+import { existsSync, renameSync, rmdirSync, unlinkSync } from "fs";
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -169,6 +169,9 @@ export async function activate(context: vscode.ExtensionContext) {
           });
 
           const cwd = getWorkDir();
+
+          if (existsSync(cwd + "/Dockerfile.hermit"))
+            return new Promise<void>((r) => r());
 
           execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd });
 
