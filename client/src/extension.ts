@@ -7,7 +7,6 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 import {
-  Command,
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
@@ -17,7 +16,6 @@ import { PerformanceGraphs } from "./performance";
 import { FilesystemVisualizer } from "./filesystem";
 import { Analytics } from "./analytics";
 
-import { CodeAction } from "vscode";
 import SimpleRepair from "./repair/SimpleRepair";
 import ConsecutiveRunRepair from "./repair/ConsecutiveRunRepair";
 import AptListRepair from "./repair/AptListRepair";
@@ -26,6 +24,7 @@ import SingleCopyRepair from "./repair/SingleCopyRepair";
 import WorkDirRepair from "./repair/WorkDirRepair";
 import { execSync } from "child_process";
 import { existsSync, renameSync, rmdirSync, unlinkSync } from "fs";
+import HermitRepair from './repair/HermitRepair';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -103,6 +102,13 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
       new WorkDirRepair()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: "dockerfile", scheme: "file" },
+      new HermitRepair()
     )
   );
 
