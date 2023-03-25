@@ -43,6 +43,64 @@ function checkHermitAlternative(dockerfile: Dockerfile): Diagnostic[] {
 
   const hermitDockerfile = DockerfileParser.parse(hermitDockerfileContent);
 
+  const dependenciesProblem = checkHermitDependencies(
+    dockerfile,
+    hermitDockerfile
+  );
+  if (dependenciesProblem !== null) problems.push(dependenciesProblem);
+
+  const portsProblem = checkHermitPorts(dockerfile, hermitDockerfile);
+  if (portsProblem !== null) problems.push(portsProblem);
+
+  return problems;
+}
+
+function checkHermitPorts(
+  dockerfile: Dockerfile,
+  hermitDockerfile: Dockerfile
+): Diagnostic | null {
+  const originalExposeInstructions = dockerfile
+    .getInstructions()
+    .filter((instruction) => instruction.getKeyword() === "EXPOSE");
+
+  const hermitExposeInstructions = hermitDockerfile
+    .getInstructions()
+    .filter((instruction) => instruction.getKeyword() === "EXPOSE");
+
+  const range = getRangeBeforeEnd(dockerfile);
+
+  if (
+    hermitExposeInstructions.length > 0 &&
+    originalExposeInstructions.length === 0
+  )
+    return createRepairDiagnostic(
+      range,
+      "Hermit detected some ports that could be exposed.",
+      "HERMITPORTS"
+    );
+
+  return null;
+}
+
+function getRangeBeforeEnd(dockerfile: Dockerfile): Range {
+  const instructions = dockerfile.getInstructions();
+
+  const finalInstruction = instructions[instructions.length - 1];
+
+  const line = finalInstruction.getRange().start.line - 1;
+
+  const range = {
+    start: { character: 0, line },
+    end: { character: 3, line },
+  };
+
+  return range;
+}
+
+function checkHermitDependencies(
+  dockerfile: Dockerfile,
+  hermitDockerfile: Dockerfile
+): Diagnostic | null {
   const distro = getDistroUsed(dockerfile);
 
   if (distro !== "") {
@@ -72,16 +130,15 @@ function checkHermitAlternative(dockerfile: Dockerfile): Diagnostic[] {
       hermitPkgInstructions.length > 0 &&
       originalPkgInstructions.length === 0
     )
-      problems.push(
-        createRepairDiagnostic(
-          range,
-          "Hermit detected some dependencies that are missing from this Dockerfile.",
-          "HERMITDEPS"
-        )
-      );
+      return;
+    createRepairDiagnostic(
+      range,
+      "Hermit detected some dependencies that are missing from this Dockerfile.",
+      "HERMITDEPS"
+    );
   }
 
-  return problems;
+  return null;
 }
 
 function getDistroUsed(dockerfile: Dockerfile): string {
