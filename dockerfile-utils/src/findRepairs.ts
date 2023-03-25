@@ -25,7 +25,12 @@ export default function checkRepairableProblems(
   problems.push(...checkVersionPinning(dockerfile));
   problems.push(...checkCopys(dockerfile));
   problems.push(...checkWorkDir(dockerfile));
+
+  console.log(problems);
+
   problems.push(...checkHermitAlternative(dockerfile));
+
+  console.log(problems);
 
   return problems;
 }
@@ -34,13 +39,11 @@ function checkHermitAlternative(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
   const hermitDockerfilePath = "Dockerfile.hermit";
-
   const hermitDockerfileExists = existsSync(hermitDockerfilePath);
 
   if (!hermitDockerfileExists) return [];
 
   const hermitDockerfileContent = readFileSync(hermitDockerfilePath).toString();
-
   const hermitDockerfile = DockerfileParser.parse(hermitDockerfileContent);
 
   const dependenciesProblem = checkHermitDependencies(
@@ -72,12 +75,13 @@ function checkHermitPorts(
   if (
     hermitExposeInstructions.length > 0 &&
     originalExposeInstructions.length === 0
-  )
+  ) {
     return createRepairDiagnostic(
       range,
       "Hermit detected some ports that could be exposed.",
       "HERMITPORTS"
     );
+  }
 
   return null;
 }
@@ -129,13 +133,13 @@ function checkHermitDependencies(
     if (
       hermitPkgInstructions.length > 0 &&
       originalPkgInstructions.length === 0
-    )
-      return;
-    createRepairDiagnostic(
-      range,
-      "Hermit detected some dependencies that are missing from this Dockerfile.",
-      "HERMITDEPS"
-    );
+    ) {
+      return createRepairDiagnostic(
+        range,
+        "Hermit detected some dependencies that are missing from this Dockerfile.",
+        "HERMITDEPS"
+      );
+    }
   }
 
   return null;
