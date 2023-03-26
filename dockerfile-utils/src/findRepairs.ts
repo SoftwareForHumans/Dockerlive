@@ -25,12 +25,30 @@ export default function checkRepairableProblems(
   problems.push(...checkVersionPinning(dockerfile));
   problems.push(...checkCopys(dockerfile));
   problems.push(...checkWorkDir(dockerfile));
-
-  console.log(problems);
-
+  problems.push(...checkUser(dockerfile));
   problems.push(...checkHermitAlternative(dockerfile));
 
-  console.log(problems);
+  return problems;
+}
+
+function checkUser(dockerfile: Dockerfile): Diagnostic[] {
+  const problems: Diagnostic[] = [];
+
+  const userInstructions = dockerfile
+    .getInstructions()
+    .filter((instruction) => instruction.getKeyword() === "USER");
+
+  if (userInstructions.length === 0) {
+    const range = getRangeBeforeEnd(dockerfile);
+
+    problems.push(
+      createRepairDiagnostic(
+        range,
+        "A user other than root should be used.",
+        "NOROOTUSER"
+      )
+    );
+  }
 
   return problems;
 }
