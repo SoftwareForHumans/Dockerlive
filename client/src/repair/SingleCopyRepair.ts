@@ -57,7 +57,7 @@ export default class SingleCopyRepair
         (isNode ? "package*.json" : "requirements.txt") +
         " ." +
         newlineChar;
-      const secondCopy = "COPY . ." + newlineChar;
+      const secondCopy = newlineChar + "COPY . ." + newlineChar;
       const replacementText = firstCopy + textToBeMaintained + secondCopy;
 
       const rangeToBeReplaced = new Range(
