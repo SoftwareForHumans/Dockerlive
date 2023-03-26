@@ -25,6 +25,7 @@ import WorkDirRepair from "./repair/WorkDirRepair";
 import { execSync } from "child_process";
 import { existsSync, renameSync, rmdirSync, unlinkSync } from "fs";
 import HermitRepair from './repair/HermitRepair';
+import UserRepair from './repair/UserRepair';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -109,6 +110,13 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
       new HermitRepair()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: "dockerfile", scheme: "file" },
+      new UserRepair()
     )
   );
 
