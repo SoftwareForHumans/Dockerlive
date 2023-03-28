@@ -509,10 +509,15 @@ function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
 
   aptInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
-    const aptGetArg = args.find(
-      (arg, index) =>
-        arg.getValue() === "apt-get" && args[index + 1].getValue() === "install"
-    );
+
+    let aptGetArg = null;
+
+    args.forEach((arg, index) => {
+      const nextArg = args[index + 1];
+      if (nextArg === null || nextArg === undefined) return;
+      if (arg.getValue() === "apt-get" && nextArg.getValue() === "install") aptGetArg = arg;
+    });
+
     const installArg = args.find((arg) => arg.getValue() === "install");
 
     if (installArg === undefined) return; //goes to next iteration
