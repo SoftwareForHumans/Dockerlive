@@ -41,13 +41,14 @@ function checkUser(dockerfile: Dockerfile): Diagnostic[] {
   if (userInstructions.length === 0) {
     const range = getRangeBeforeEnd(dockerfile);
 
-    problems.push(
-      createRepairDiagnostic(
-        range,
-        "A user other than root should be used.",
-        "NOROOTUSER"
-      )
-    );
+    if (range)
+      problems.push(
+        createRepairDiagnostic(
+          range,
+          "A user other than root should be used.",
+          "NOROOTUSER"
+        )
+      );
   }
 
   return problems;
@@ -91,6 +92,7 @@ function checkHermitPorts(
   const range = getRangeBeforeEnd(dockerfile);
 
   if (
+    range &&
     hermitExposeInstructions.length > 0 &&
     originalExposeInstructions.length === 0
   ) {
@@ -104,8 +106,10 @@ function checkHermitPorts(
   return null;
 }
 
-function getRangeBeforeEnd(dockerfile: Dockerfile): Range {
+function getRangeBeforeEnd(dockerfile: Dockerfile): Range | null {
   const instructions = dockerfile.getInstructions();
+
+  if (!instructions || instructions.length === 0) return null;
 
   const finalInstruction = instructions[instructions.length - 1];
 
@@ -149,6 +153,7 @@ function checkHermitDependencies(
     const range = getRangeAfterFrom(dockerfile);
 
     if (
+      range &&
       hermitPkgInstructions.length > 0 &&
       originalPkgInstructions.length === 0
     ) {
@@ -164,7 +169,11 @@ function checkHermitDependencies(
 }
 
 function getDistroUsed(dockerfile: Dockerfile): string {
-  const imageTag = dockerfile.getFROMs()[0].getImageTag();
+  const froms = dockerfile.getFROMs();
+
+  if (!froms || froms.length === 0) return "debian";
+
+  const imageTag = froms[0].getImageTag();
 
   const hasAlpineInImageTag = imageTag !== null && imageTag.includes("alpine");
 
@@ -177,7 +186,7 @@ function getDistroUsed(dockerfile: Dockerfile): string {
       .includes("apk")
   );
 
-  if (apkMentions.length > 0) return "alpine";
+  if (apkMentions && apkMentions.length > 0) return "alpine";
 
   return "debian";
 }
@@ -191,7 +200,7 @@ function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
 
   const range = getRangeAfterFrom(dockerfile);
 
-  if (workdirInstructions.length === 0)
+  if (workdirInstructions.length === 0 && range)
     problems.push(
       createRepairDiagnostic(
         range,
@@ -203,8 +212,12 @@ function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
   return problems;
 }
 
-function getRangeAfterFrom(dockerfile: Dockerfile): Range {
-  const fromLine = dockerfile.getFROMs()[0].getRange().start.line;
+function getRangeAfterFrom(dockerfile: Dockerfile): Range | null {
+  const froms = dockerfile.getFROMs();
+
+  if (!froms || froms.length === 0) return null;
+
+  const fromLine = froms[0].getRange().start.line;
 
   const range = {
     start: { character: 0, line: fromLine + 1 },
@@ -269,6 +282,8 @@ function checkApkProblems(dockerfile: Dockerfile): Diagnostic[] {
   apkInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
 
+    if (!args || args.length === 0) return;
+
     const apkArg = args.find((arg) => arg.getValue() === "apk");
     const addArg = args.find((arg) => arg.getValue() === "add");
 
@@ -320,6 +335,8 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
         const component = instructionComponents[i];
         const previousComponent = instructionComponents[i - 1];
 
+        if (!component || !previousComponent) continue;
+
         const currentComponentIsCurl = component === "curl";
         const previousComponentIsAnd = previousComponent === "&&";
         const previousComponentIsRun = previousComponent === "RUN";
@@ -340,15 +357,30 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
         .find((argValue) => argValue === "wget") !== undefined
   );
 
-  curlInstructions.forEach((instruction) => {
+  curlInstructions.forEach((instruction: Instruction) => {
     const args = instruction.getArguments();
 
-    const curlArg = args.find((arg) => arg.getValue() === "curl");
+    if (!args || args.length === 0) return;
 
-    if (curlArg === undefined) return;
+    let curlArgIndex = -1,
+      quietFlagIndex = -1;
 
-    const hasQuietFlag =
-      args.find((arg) => arg.getValue() === "-f") !== undefined;
+    args.forEach((arg, index) => {
+      if (!arg) return;
+
+      const argValue = arg.getValue();
+
+      if (argValue === "curl") curlArgIndex = index;
+      if (argValue === "-f") quietFlagIndex = index;
+    });
+
+    if (quietFlagIndex <= curlArgIndex) return;
+
+    if (curlArgIndex === -1) return;
+
+    const curlArg = args[curlArgIndex];
+
+    const hasQuietFlag = quietFlagIndex !== -1;
 
     if (!hasQuietFlag)
       problems.push(
@@ -362,6 +394,8 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
 
   wgetInstructions.concat(curlInstructions).forEach((instruction) => {
     const args = instruction.getArguments();
+
+    if (!args || args.length === 0) return;
 
     const urlArg = args.find((arg) => arg.getValue().includes("http"));
 
@@ -391,6 +425,9 @@ function checkCdUsage(dockerfile: Dockerfile): Diagnostic[] {
 
   runInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
+
+    if (!args) return;
+
     const hasTwoArguments = args.length === 2;
     const cdArg = args.find((arg) => arg.getValue() === "cd");
 
@@ -417,6 +454,8 @@ function checkUnsuitableInstructions(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
   const instructions = dockerfile.getInstructions();
+
+  if (!instructions || instructions.length === 0) return problems;
 
   const addInstructions = instructions.filter(
     (instruction) => instruction.getKeyword() === "ADD"
@@ -462,10 +501,12 @@ function checkConsecutiveRunInstructions(dockerfile: Dockerfile): Diagnostic[] {
   const instructions = dockerfile.getInstructions();
 
   for (let i = 1; i < instructions.length; i++) {
-    const currentinstruction = instructions[i];
+    const currentInstruction = instructions[i];
     const previousInstruction = instructions[i - 1];
 
-    const currentInstructionKeyword = currentinstruction.getKeyword();
+    if (!currentInstruction || !previousInstruction) continue;
+
+    const currentInstructionKeyword = currentInstruction.getKeyword();
     const previousInstructionKeyword = previousInstruction.getKeyword();
 
     const areConsecutiveRunInstructions =
@@ -475,7 +516,7 @@ function checkConsecutiveRunInstructions(dockerfile: Dockerfile): Diagnostic[] {
     if (areConsecutiveRunInstructions) {
       const range = {
         start: previousInstruction.getRange().start,
-        end: currentinstruction.getRange().end,
+        end: currentInstruction.getRange().end,
       };
 
       problems.push(
@@ -505,17 +546,18 @@ function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
           .find((argValue) => argValue === "apt-get") !== undefined
     );
 
-  if (aptInstructions.length === 0) return [];
+  if (!aptInstructions || aptInstructions.length === 0) return [];
 
   aptInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
 
-    let aptGetArg = null;
+    let aptGetArg: Argument = null;
 
     args.forEach((arg, index) => {
       const nextArg = args[index + 1];
-      if (nextArg === null || nextArg === undefined) return;
-      if (arg.getValue() === "apt-get" && nextArg.getValue() === "install") aptGetArg = arg;
+      if (!nextArg) return;
+      if (arg.getValue() === "apt-get" && nextArg.getValue() === "install")
+        aptGetArg = arg;
     });
 
     const installArg = args.find((arg) => arg.getValue() === "install");
@@ -527,26 +569,28 @@ function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
       installArg,
       args
     );
-    if (missingElementProblems.length > 0)
+    if (missingElementProblems && missingElementProblems.length > 0)
       problems.push(...missingElementProblems);
 
     const missingAptListRemoval = checkAtpListRemoval(instruction);
-    if (missingAptListRemoval !== undefined)
+    if (missingAptListRemoval)
       problems.push(missingAptListRemoval);
   });
 
   return problems;
 }
 
-function checkAtpListRemoval(instruction: Instruction): Diagnostic | undefined {
+function checkAtpListRemoval(instruction: Instruction): Diagnostic | null {
   const args = instruction.getArguments();
+
+  if (!args || args.length === 0) return null;
 
   const argString = args
     .map((arg) => arg.getValue())
     .join(" ")
     .replace("  ", " ");
 
-  if (argString.includes("rm -rf /var/lib/apt/lists/*")) return;
+  if (argString.includes("rm -rf /var/lib/apt/lists/*")) return null;
 
   return createRepairDiagnostic(
     instruction.getRange(),
@@ -562,7 +606,7 @@ function checkMissingElements(
 ): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  if (aptGetArg === undefined) return [];
+  if (aptGetArg === undefined || !args) return [];
 
   const range: Range = {
     start: aptGetArg.getRange().start,
