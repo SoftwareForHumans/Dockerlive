@@ -32,7 +32,19 @@ export default class SingleCopyRepair
       const documentText = document.getText();
 
       const originalCopyIndex = documentText.indexOf("COPY");
+
       const newlineChar = getNewline();
+
+      const firstNewlineAfterCopy = documentText.indexOf(newlineChar, originalCopyIndex);
+
+      const originalCopyContent = documentText.substring(originalCopyIndex, firstNewlineAfterCopy).replace("  ", " ");
+
+      const copyComponents = originalCopyContent.split(" ");
+
+      if (!copyComponents || copyComponents.length < 3) continue;
+
+      const secondArg = copyComponents[2];
+
       const newLineCharLength = getNumberOfCharsForNewline();
       const indexAfterOriginalCopy =
         documentText.indexOf(newlineChar, originalCopyIndex) +
@@ -55,7 +67,7 @@ export default class SingleCopyRepair
       const firstCopy =
         "COPY " +
         (isNode ? "package*.json" : "requirements.txt") +
-        " ." +
+        " " + secondArg + (secondArg.endsWith("/") ? "" : "/") +
         newlineChar;
       const secondCopy = newlineChar + "COPY . ." + newlineChar;
       const replacementText = firstCopy + textToBeMaintained + secondCopy;
