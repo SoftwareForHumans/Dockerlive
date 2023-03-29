@@ -4,12 +4,14 @@ import {
   DockerfileParser,
   Instruction,
 } from "dockerfile-ast";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, unlinkSync } from "fs";
 import {
   Diagnostic,
   Range,
   DiagnosticSeverity,
 } from "vscode-languageserver-types";
+
+let hermitDockerfileContent: string = null;
 
 export default function checkRepairableProblems(
   dockerfile: Dockerfile
@@ -60,9 +62,12 @@ function checkHermitAlternative(dockerfile: Dockerfile): Diagnostic[] {
   const hermitDockerfilePath = "Dockerfile.hermit";
   const hermitDockerfileExists = existsSync(hermitDockerfilePath);
 
-  if (!hermitDockerfileExists) return [];
-
-  const hermitDockerfileContent = readFileSync(hermitDockerfilePath).toString();
+  if (hermitDockerfileExists) {
+    hermitDockerfileContent = readFileSync(hermitDockerfilePath).toString();
+    unlinkSync(hermitDockerfilePath);
+  }
+  else if (!hermitDockerfileExists && hermitDockerfileContent === null) return [];
+  
   const hermitDockerfile = DockerfileParser.parse(hermitDockerfileContent);
 
   const dependenciesProblem = checkHermitDependencies(

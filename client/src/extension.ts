@@ -23,7 +23,7 @@ import VersionPinRepair from "./repair/VersionPinRepair";
 import SingleCopyRepair from "./repair/SingleCopyRepair";
 import WorkDirRepair from "./repair/WorkDirRepair";
 import { execSync } from "child_process";
-import { existsSync, renameSync, rmdirSync, unlinkSync } from "fs";
+import { existsSync, readFileSync, renameSync, rmdirSync, unlinkSync } from "fs";
 import HermitRepair from './repair/HermitRepair';
 import UserRepair from './repair/UserRepair';
 
@@ -106,10 +106,12 @@ export async function activate(context: vscode.ExtensionContext) {
     )
   );
 
+  const hermitRepair = new HermitRepair();
+
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
-      new HermitRepair()
+      hermitRepair
     )
   );
 
@@ -184,10 +186,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
           const cwd = getWorkDir();
 
-          if (existsSync(cwd + "/Dockerfile.hermit"))
-            return new Promise<void>((r) => r());
+          execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd }).toString();
+          
+          const dockerfilePath = cwd + "/Dockerfile.hermit";
 
-          execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd });
+          if (!existsSync(dockerfilePath)) return new Promise<void>(r => r());
+          
+          const dockerfileContent = readFileSync(dockerfilePath).toString();
+          hermitRepair.setHermitDockerfileContent(dockerfileContent);
 
           progress.report({
             increment: 100,

@@ -12,6 +12,12 @@ import {
 import { createAction, getNewline } from "./common";
 
 export default class HermitRepair implements CodeActionProvider<CodeAction> {
+  hermitDockerfileContent: string;
+  
+  setHermitDockerfileContent(content: string) {
+    this.hermitDockerfileContent = content;
+  }
+
   provideCodeActions(
     document: TextDocument,
     range: Range | Selection,
@@ -21,25 +27,17 @@ export default class HermitRepair implements CodeActionProvider<CodeAction> {
     const actions: CodeAction[] = [];
 
     for (const diagnostic of context.diagnostics) {
-      const lastIndexOfSlash = document.fileName.lastIndexOf("/");
-      const path = document.fileName.substring(0, lastIndexOfSlash);
-      const hermitDockerfilePath = path + "/Dockerfile.hermit";
-      const hermitDockerfileExists = existsSync(hermitDockerfilePath);
-
-      if (!hermitDockerfileExists) continue;
-
-      const hermitDockerfileContent =
-        readFileSync(hermitDockerfilePath).toString();
+      if (!this.hermitDockerfileContent) continue;
 
       switch (diagnostic.code) {
         case "R:HERMITDEPS":
           actions.push(
-            getDependenciesAction(hermitDockerfileContent, diagnostic, document)
+            getDependenciesAction(this.hermitDockerfileContent, diagnostic, document)
           );
           break;
         case "R:HERMITPORTS":
           actions.push(
-            getPortsAction(hermitDockerfileContent, diagnostic, document)
+            getPortsAction(this.hermitDockerfileContent, diagnostic, document)
           );
           break;
         default:
@@ -69,7 +67,7 @@ function getPortsAction(
   });
 
   const action = createAction(
-    "Add command to expose ports detected by Hermit.",
+    "Add command to expose detected ports.",
     replacementText,
     document.uri,
     diagnostic.range
@@ -108,7 +106,7 @@ function getDependenciesAction(
   const replacementText = newlineChar + contentToBeCopied + newlineChar;
 
   const action = createAction(
-    "Add command to install dependencies detected by Hermit.",
+    "Add command to install detected dependencies.",
     replacementText,
     document.uri,
     range
