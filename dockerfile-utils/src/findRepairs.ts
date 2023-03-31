@@ -103,7 +103,7 @@ function checkHermitPorts(
   ) {
     return createRepairDiagnostic(
       range,
-      "Hermit detected some ports that could be exposed.",
+      "Some ports that could be exposed were detected.",
       "HERMITPORTS"
     );
   }
@@ -164,7 +164,7 @@ function checkHermitDependencies(
     ) {
       return createRepairDiagnostic(
         range,
-        "Hermit detected some dependencies that are missing from this Dockerfile.",
+        "Some dependencies that are missing from this Dockerfile have been detected.",
         "HERMITDEPS"
       );
     }
