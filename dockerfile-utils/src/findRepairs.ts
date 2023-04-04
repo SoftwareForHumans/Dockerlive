@@ -65,9 +65,9 @@ function checkHermitAlternative(dockerfile: Dockerfile): Diagnostic[] {
   if (hermitDockerfileExists) {
     hermitDockerfileContent = readFileSync(hermitDockerfilePath).toString();
     unlinkSync(hermitDockerfilePath);
-  }
-  else if (!hermitDockerfileExists && hermitDockerfileContent === null) return [];
-  
+  } else if (!hermitDockerfileExists && hermitDockerfileContent === null)
+    return [];
+
   const hermitDockerfile = DockerfileParser.parse(hermitDockerfileContent);
 
   const dependenciesProblem = checkHermitDependencies(
@@ -94,18 +94,76 @@ function checkHermitPorts(
     .getInstructions()
     .filter((instruction) => instruction.getKeyword() === "EXPOSE");
 
-  const range = getRangeBeforeEnd(dockerfile);
-
   if (
-    range &&
     hermitExposeInstructions.length > 0 &&
     originalExposeInstructions.length === 0
   ) {
+    const range = getRangeBeforeEnd(dockerfile);
+    if (!range) return null;
+
     return createRepairDiagnostic(
       range,
       "Some ports that could be exposed were detected.",
       "HERMITPORTS"
     );
+  } else if (
+    hermitExposeInstructions.length > 0 &&
+    originalExposeInstructions.length > 0
+  ) {
+    const originalPorts = originalExposeInstructions.map((instruction) => {
+      const args = instruction.getArguments();
+      if (!args || args.length === 0) return;
+      return args[0].getValue();
+    });
+    if (
+      !originalPorts ||
+      originalPorts.length === 0 ||
+      originalPorts.includes(undefined)
+    )
+      return null;
+
+    const hermitPorts = hermitExposeInstructions.map((instruction) => {
+      const args = instruction.getArguments();
+      if (!args || args.length === 0) return;
+      return args[0].getValue();
+    });
+    if (
+      !hermitPorts ||
+      hermitPorts.length === 0 ||
+      hermitPorts.includes(undefined)
+    )
+      return null;
+
+    let needToRepair = false;
+
+    hermitPorts.forEach((port) => {
+      if (!port) return;
+      if (!originalPorts.includes(port)) needToRepair = true;
+    });
+
+    originalPorts.forEach((port) => {
+      if (!port) return;
+      if (!hermitPorts.includes(port)) needToRepair = true;
+    });
+
+    const start = originalExposeInstructions[0].getRange().start;
+
+    const end =
+      originalExposeInstructions[
+        originalExposeInstructions.length - 1
+      ].getRange().end;
+
+    const range = {
+      start,
+      end,
+    };
+
+    if (needToRepair)
+      return createRepairDiagnostic(
+        range,
+        "Some mistakes were detected with the ports being exposed.",
+        "HERMITPORTS"
+      );
   }
 
   return null;
@@ -578,8 +636,7 @@ function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
       problems.push(...missingElementProblems);
 
     const missingAptListRemoval = checkAtpListRemoval(instruction);
-    if (missingAptListRemoval)
-      problems.push(missingAptListRemoval);
+    if (missingAptListRemoval) problems.push(missingAptListRemoval);
   });
 
   return problems;

@@ -67,7 +67,7 @@ function getPortsAction(
   });
 
   const action = createAction(
-    "Add command to expose detected ports.",
+    "Add/update command to expose detected ports.",
     replacementText,
     document.uri,
     diagnostic.range
