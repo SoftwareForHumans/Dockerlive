@@ -195,14 +195,16 @@ export async function activate(context: vscode.ExtensionContext) {
           const cwd = getWorkDir();
 
           execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd }).toString();
-          
-          const dockerfilePath = cwd + "/Dockerfile.hermit";
 
+          const dockerfilePath = cwd + "/Dockerfile.hermit";
+          
           if (!existsSync(dockerfilePath)) return new Promise<void>(r => r());
           
           const dockerfileContent = readFileSync(dockerfilePath).toString();
           hermitRepair.setHermitDockerfileContent(dockerfileContent);
-
+          
+          client.sendNotification("dockerlive/forceValidation");
+          
           progress.report({
             increment: 100,
             message: "Finishing generation and performing cleanup...",
