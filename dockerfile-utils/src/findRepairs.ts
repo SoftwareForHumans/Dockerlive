@@ -13,6 +13,71 @@ import {
 
 let hermitDockerfileContent: string = null;
 
+const NO_ROOT_USER_MSG = "A user other than root should be used.";
+const NO_ROOT_USER_SUFFIX = "NOROOTUSER";
+
+const HERMIT_PORTS_MSG_1 = "Some ports that could be exposed were detected.";
+const HERMIT_PORTS_MSG_2 =
+  "Some mistakes were detected with the ports being exposed.";
+const HERMIT_PORTS_SUFFIX = "HERMITPORTS";
+
+const HERMIT_DEPS_MSG =
+  "Some dependencies that are missing from this Dockerfile have been detected.";
+const HERMIT_DEPS_SUFFIX = "HERMITDEPS";
+
+const NO_ROOT_DIR_MSG = "A working directory other than / should be used.";
+const NO_ROOT_DIR_SUFFIX = "NOROOTDIR";
+
+const SINGLE_COPY_MSG =
+  "Two COPY instructions should be used, one to copy the files required for installing dependencies and another to copy the rest of the source code files.";
+const SINGLE_COPY_SUFFIX = "SINGLECOPY";
+
+const NO_IMAGE_PIN_MSG =
+  "The version of the base image should be pinned to improve stability, speed and security.";
+const NO_IMAGE_PIN_SUFFIX = "NOIMAGEPIN";
+
+const NO_CACHE_MSG =
+  "The --no-cache option should be used when installing packages with APK.";
+const NO_CACHE_SUFFIX = "NOCACHE";
+
+const F_CURL_MSG =
+  "The -f option should be used with curl to avoid errors if the request fails.";
+const F_CURL_SUFFIX = "FCURL";
+
+const NO_HTTP_URL_MSG = "HTTPS URLs should be used instead of HTTP URLs.";
+const NO_HTTP_URL_SUFFIX = "NOHTTPURL";
+
+const NO_CD_MSG =
+  "The working directory is not preserved between RUN instruction. Use the WORKDIR instruction instead.";
+const NO_CD_SUFFIX = "NOCD";
+
+const NO_ADD_MSG =
+  "The COPY instruction should be used instead of the ADD instruction, if possible.";
+const NO_ADD_SUFFIX = "NOADD";
+
+const NO_MAINTAINER_MSG = "The MAINTAINER instruction has been deprecated.";
+const NO_MAINTAINER_SUFFIX = "NOMAINTAINER";
+
+const CONSECUTIVE_RUN_MSG =
+  "Consecutive RUN instructions should be merged to minimize the number of layers.";
+const CONSECUTIVE_RUN_SUFFIX = "CONSECUTIVERUN";
+
+const APT_LIST_MSG =
+  "The list of packages should be removed after performing an installation to reduce wasted space.";
+const APT_LIST_SUFFIX = "APTLIST";
+
+const NO_INSTALL_RECOMMENDS_MSG =
+  "The --no-install-recommends option should be used with apt-get install.";
+const NO_INSTALL_RECOMMENDS_SUFFIX = "NOINSTALLRECOMMENDS";
+
+const UPDATE_BEFORE_INSTALL_MSG =
+  "The apt-get update command should be executed before apt-get install.";
+const UPDATE_BEFORE_INSTALL_SUFFIX = "UPDATEBEFOREINSTALL";
+
+const CONFIRM_INSTALL_MSG =
+  "The -y option should be used with apt-get install.";
+const CONFIRM_INSTALL_SUFFIX = "CONFIRMINSTALL";
+
 export default function checkRepairableProblems(
   dockerfile: Dockerfile
 ): Diagnostic[] {
@@ -45,11 +110,7 @@ function checkUser(dockerfile: Dockerfile): Diagnostic[] {
 
     if (range)
       problems.push(
-        createRepairDiagnostic(
-          range,
-          "A user other than root should be used.",
-          "NOROOTUSER"
-        )
+        createRepairDiagnostic(range, NO_ROOT_USER_MSG, NO_ROOT_USER_SUFFIX)
       );
   }
 
@@ -103,8 +164,8 @@ function checkHermitPorts(
 
     return createRepairDiagnostic(
       range,
-      "Some ports that could be exposed were detected.",
-      "HERMITPORTS"
+      HERMIT_PORTS_MSG_1,
+      HERMIT_PORTS_SUFFIX
     );
   } else if (
     hermitExposeInstructions.length > 0 &&
@@ -161,8 +222,8 @@ function checkHermitPorts(
     if (needToRepair)
       return createRepairDiagnostic(
         range,
-        "Some mistakes were detected with the ports being exposed.",
-        "HERMITPORTS"
+        HERMIT_PORTS_MSG_2,
+        HERMIT_PORTS_SUFFIX
       );
   }
 
@@ -220,11 +281,7 @@ function checkHermitDependencies(
       hermitPkgInstructions.length > 0 &&
       originalPkgInstructions.length === 0
     ) {
-      return createRepairDiagnostic(
-        range,
-        "Some dependencies that are missing from this Dockerfile have been detected.",
-        "HERMITDEPS"
-      );
+      return createRepairDiagnostic(range, HERMIT_DEPS_MSG, HERMIT_DEPS_SUFFIX);
     }
   }
 
@@ -265,11 +322,7 @@ function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
 
   if (workdirInstructions.length === 0 && range)
     problems.push(
-      createRepairDiagnostic(
-        range,
-        "A working directory other than / should be used.",
-        "NOROOTDIR"
-      )
+      createRepairDiagnostic(range, NO_ROOT_DIR_MSG, NO_ROOT_DIR_SUFFIX)
     );
 
   return problems;
@@ -299,8 +352,8 @@ function checkCopys(dockerfile: Dockerfile): Diagnostic[] {
     problems.push(
       createRepairDiagnostic(
         copys[0].getRange(),
-        "Two COPY instructions should be used, one to copy the files required for installing dependencies and another to copy the rest of the source code files.",
-        "SINGLECOPY"
+        SINGLE_COPY_MSG,
+        SINGLE_COPY_SUFFIX
       )
     );
 
@@ -319,8 +372,8 @@ function checkVersionPinning(dockerfile: Dockerfile): Diagnostic[] {
       problems.push(
         createRepairDiagnostic(
           from.getRange(),
-          "The version of the base image should be pinned to improve stability, speed and security.",
-          "NOIMAGEPIN"
+          NO_IMAGE_PIN_MSG,
+          NO_IMAGE_PIN_SUFFIX
         )
       );
   });
@@ -362,11 +415,7 @@ function checkApkProblems(dockerfile: Dockerfile): Diagnostic[] {
 
     if (!hasCacheArg)
       problems.push(
-        createRepairDiagnostic(
-          range,
-          "The --no-cache option should be used when installing packages with APK.",
-          "NOCACHE"
-        )
+        createRepairDiagnostic(range, NO_CACHE_MSG, NO_CACHE_SUFFIX)
       );
   });
 
@@ -447,11 +496,7 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
 
     if (!hasQuietFlag)
       problems.push(
-        createRepairDiagnostic(
-          curlArg.getRange(),
-          "The -f option should be used with curl to avoid errors if the request fails.",
-          "FCURL"
-        )
+        createRepairDiagnostic(curlArg.getRange(), F_CURL_MSG, F_CURL_SUFFIX)
       );
   });
 
@@ -470,8 +515,8 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
       problems.push(
         createRepairDiagnostic(
           urlArg.getRange(),
-          "HTTPS URLs should be used instead of HTTP URLs.",
-          "NOHTTPURL"
+          NO_HTTP_URL_MSG,
+          NO_HTTP_URL_SUFFIX
         )
       );
   });
@@ -501,13 +546,7 @@ function checkCdUsage(dockerfile: Dockerfile): Diagnostic[] {
       end: args[0].getRange().end,
     };
 
-    problems.push(
-      createRepairDiagnostic(
-        range,
-        "The working directory is not preserved between RUN instruction. Use the WORKDIR instruction instead.",
-        "NOCD"
-      )
-    );
+    problems.push(createRepairDiagnostic(range, NO_CD_MSG, NO_CD_SUFFIX));
   });
 
   return problems;
@@ -536,21 +575,15 @@ function checkUnsuitableInstructions(dockerfile: Dockerfile): Diagnostic[] {
         character: instructionRangeStart.character + 3,
       },
     };
-    problems.push(
-      createRepairDiagnostic(
-        range,
-        "The COPY instruction should be used instead of the ADD instruction, if possible.",
-        "NOADD"
-      )
-    );
+    problems.push(createRepairDiagnostic(range, NO_ADD_MSG, NO_ADD_SUFFIX));
   });
 
   maintainerInstructions.forEach((instruction) => {
     problems.push(
       createRepairDiagnostic(
         instruction.getRange(),
-        "The MAINTAINER instruction has been deprecated.",
-        "NOMAINTAINER"
+        NO_MAINTAINER_MSG,
+        NO_MAINTAINER_SUFFIX
       )
     );
   });
@@ -585,8 +618,8 @@ function checkConsecutiveRunInstructions(dockerfile: Dockerfile): Diagnostic[] {
       problems.push(
         createRepairDiagnostic(
           range,
-          "Consecutive RUN instructions should be merged to minimize the number of layers.",
-          "CONSECUTIVERUN"
+          CONSECUTIVE_RUN_MSG,
+          CONSECUTIVE_RUN_SUFFIX
         )
       );
     }
@@ -656,8 +689,8 @@ function checkAtpListRemoval(instruction: Instruction): Diagnostic | null {
 
   return createRepairDiagnostic(
     instruction.getRange(),
-    "The list of packages should be removed after performing an installation to reduce wasted space.",
-    "APTLIST"
+    APT_LIST_MSG,
+    APT_LIST_SUFFIX
   );
 }
 
@@ -682,8 +715,8 @@ function checkMissingElements(
     problems.push(
       createRepairDiagnostic(
         range,
-        "The --no-install-recommends option should be used with apt-get install.",
-        "NOINSTALLRECOMMENDS"
+        NO_INSTALL_RECOMMENDS_MSG,
+        NO_INSTALL_RECOMMENDS_SUFFIX
       )
     );
 
@@ -694,18 +727,14 @@ function checkMissingElements(
     problems.push(
       createRepairDiagnostic(
         range,
-        "The apt-get update command should be executed before apt-get install.",
-        "UPDATEBEFOREINSTALL"
+        UPDATE_BEFORE_INSTALL_MSG,
+        UPDATE_BEFORE_INSTALL_SUFFIX
       )
     );
 
   if (args.find((arg) => arg.getValue() === "-y") === undefined)
     problems.push(
-      createRepairDiagnostic(
-        range,
-        "The -y option should be used with apt-get install.",
-        "CONFIRMINSTALL"
-      )
+      createRepairDiagnostic(range, CONFIRM_INSTALL_MSG, CONFIRM_INSTALL_SUFFIX)
     );
 
   return problems;
