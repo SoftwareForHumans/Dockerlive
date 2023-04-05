@@ -9,6 +9,9 @@ import {
 } from "vscode";
 import { createAction, getNewline } from "./common";
 
+const NO_ROOT_DIR_MSG = "Use WORKDIR to change the working directory.";
+const NO_ROOT_DIR_CODE = "R:NOROOTDIR";
+
 export default class WorkDirRepair implements CodeActionProvider<CodeAction> {
   provideCodeActions(
     document: TextDocument,
@@ -19,7 +22,7 @@ export default class WorkDirRepair implements CodeActionProvider<CodeAction> {
     const actions: CodeAction[] = [];
 
     for (const diagnostic of context.diagnostics) {
-      if (diagnostic.code !== "R:NOROOTDIR") continue;
+      if (diagnostic.code !== NO_ROOT_DIR_CODE) continue;
 
       const newlineChar = getNewline();
 
@@ -33,7 +36,7 @@ export default class WorkDirRepair implements CodeActionProvider<CodeAction> {
       );
 
       const action = createAction(
-        "Use WORKDIR to change the working directory.",
+        NO_ROOT_DIR_MSG,
         replacementText,
         document.uri,
         range

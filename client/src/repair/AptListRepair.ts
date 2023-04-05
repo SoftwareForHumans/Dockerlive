@@ -2,20 +2,16 @@ import {
   CancellationToken,
   CodeAction,
   CodeActionContext,
-  CodeActionKind,
   CodeActionProvider,
-  Command,
-  Position,
-  ProviderResult,
   Range,
   Selection,
   TextDocument,
-  Uri,
-  WorkspaceEdit,
 } from "vscode";
-import * as vscode from "vscode";
 import { createAction } from "./common";
-import * as os from "os";
+
+const APT_LIST_MSG =
+  "Add command to remove APT lists after installing packages.";
+const APT_LIST_CODE = "R:APTLIST";
 
 export default class AptListRepair implements CodeActionProvider<CodeAction> {
   provideCodeActions(
@@ -27,14 +23,14 @@ export default class AptListRepair implements CodeActionProvider<CodeAction> {
     const actions: CodeAction[] = [];
 
     for (const diagnostic of context.diagnostics) {
-      if (diagnostic.code !== "R:APTLIST") continue;
+      if (diagnostic.code !== APT_LIST_CODE) continue;
 
       const instructionText = document.getText(diagnostic.range);
       const replacementText =
         instructionText + " && rm -rf /var/lib/apt/lists/*";
 
       const action = createAction(
-        "Add command to remove APT lists after installing packages.",
+        APT_LIST_MSG,
         replacementText,
         document.uri,
         diagnostic.range

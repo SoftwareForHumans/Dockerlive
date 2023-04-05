@@ -9,6 +9,9 @@ import {
 } from "vscode";
 import { createAction, isNodeProject } from "./common";
 
+const NO_IMAGE_PIN_MSG = "Pin image version.";
+const NO_IMAGE_PIN_CODE = "R:NOIMAGEPIN";
+
 export default class VersionPinRepair
   implements CodeActionProvider<CodeAction>
 {
@@ -21,12 +24,12 @@ export default class VersionPinRepair
     const actions: CodeAction[] = [];
 
     for (const diagnostic of context.diagnostics) {
-      if (diagnostic.code !== "R:NOIMAGEPIN") continue;
+      if (diagnostic.code !== NO_IMAGE_PIN_CODE) continue;
 
       const replacementText = getReplacementText(document);
 
       const action = createAction(
-        "Pin image version.",
+        NO_IMAGE_PIN_MSG,
         replacementText,
         document.uri,
         diagnostic.range

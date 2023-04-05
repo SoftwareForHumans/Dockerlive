@@ -3,7 +3,6 @@ import {
   CodeAction,
   CodeActionContext,
   CodeActionProvider,
-  Position,
   Range,
   Selection,
   TextDocument,
@@ -15,6 +14,9 @@ import {
   isNodeProject,
 } from "./common";
 
+const NO_ROOT_USER_MSG = "Add instruction to change user.";
+const NO_ROOT_USER_CODE = "R:NOROOTUSER";
+
 export default class UserRepair implements CodeActionProvider<CodeAction> {
   provideCodeActions(
     document: TextDocument,
@@ -25,13 +27,13 @@ export default class UserRepair implements CodeActionProvider<CodeAction> {
     const actions: CodeAction[] = [];
 
     for (const diagnostic of context.diagnostics) {
-      if (diagnostic.code !== "R:NOROOTUSER") continue;
+      if (diagnostic.code !== NO_ROOT_USER_CODE) continue;
 
       const replacementText = getUserText(document) + getCopyText(document);
 
       const documentText = document.getText();
       const documentHasTwoCopys = hasTwoCopys(documentText);
-      const actionTitle = "Add instruction to change user.";
+      const actionTitle = NO_ROOT_USER_MSG;
 
       if (!documentHasTwoCopys) {
         actions.push(

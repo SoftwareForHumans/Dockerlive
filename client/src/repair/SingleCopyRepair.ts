@@ -3,7 +3,6 @@ import {
   CodeAction,
   CodeActionContext,
   CodeActionProvider,
-  Position,
   Range,
   Selection,
   TextDocument,
@@ -14,6 +13,9 @@ import {
   getNumberOfCharsForNewline,
   isNodeProject,
 } from "./common";
+
+const SINGLE_COPY_MSG = "Add a second COPY instruction.";
+const SINGLE_COPY_CODE = "R:SINGLECOPY";
 
 export default class SingleCopyRepair
   implements CodeActionProvider<CodeAction>
@@ -27,7 +29,7 @@ export default class SingleCopyRepair
     const actions: CodeAction[] = [];
 
     for (const diagnostic of context.diagnostics) {
-      if (diagnostic.code !== "R:SINGLECOPY") continue;
+      if (diagnostic.code !== SINGLE_COPY_CODE) continue;
 
       const documentText = document.getText();
 
@@ -35,9 +37,14 @@ export default class SingleCopyRepair
 
       const newlineChar = getNewline();
 
-      const firstNewlineAfterCopy = documentText.indexOf(newlineChar, originalCopyIndex);
+      const firstNewlineAfterCopy = documentText.indexOf(
+        newlineChar,
+        originalCopyIndex
+      );
 
-      const originalCopyContent = documentText.substring(originalCopyIndex, firstNewlineAfterCopy).replace("  ", " ");
+      const originalCopyContent = documentText
+        .substring(originalCopyIndex, firstNewlineAfterCopy)
+        .replace("  ", " ");
 
       const copyComponents = originalCopyContent.split(" ");
 
@@ -67,7 +74,9 @@ export default class SingleCopyRepair
       const firstCopy =
         "COPY " +
         (isNode ? "package*.json" : "requirements.txt") +
-        " " + secondArg + (secondArg.endsWith("/") ? "" : "/") +
+        " " +
+        secondArg +
+        (secondArg.endsWith("/") ? "" : "/") +
         newlineChar;
       const secondCopy = newlineChar + "COPY . ." + newlineChar;
       const replacementText = firstCopy + textToBeMaintained + secondCopy;
@@ -78,7 +87,7 @@ export default class SingleCopyRepair
       );
 
       const action = createAction(
-        "Add a second COPY instruction.",
+        SINGLE_COPY_MSG,
         replacementText,
         document.uri,
         rangeToBeReplaced

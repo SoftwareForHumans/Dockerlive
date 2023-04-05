@@ -9,6 +9,9 @@ import {
 } from "vscode";
 import { createAction, getNewline, getNumberOfCharsForNewline } from "./common";
 
+const CONSECUTIVE_RUN_MSG = "Merge consecutive RUN instructions."
+const CONSECUTIVE_RUN_CODE = "R:CONSECUTIVERUN"
+
 export default class ConsecutiveRunRepair
   implements CodeActionProvider<CodeAction>
 {
@@ -21,7 +24,7 @@ export default class ConsecutiveRunRepair
     const actions: CodeAction[] = [];
 
     for (const diagnostic of context.diagnostics) {
-      if (diagnostic.code !== "R:CONSECUTIVERUN") continue;
+      if (diagnostic.code !== CONSECUTIVE_RUN_CODE) continue;
 
       const instructionsText = document.getText(diagnostic.range);
       const secondRunKeywordPosition = instructionsText.lastIndexOf("RUN");
@@ -39,7 +42,7 @@ export default class ConsecutiveRunRepair
       ).replace(newlineChar, "");
       
       const action = createAction(
-        "Merge consecutive RUN instructions.",
+        CONSECUTIVE_RUN_MSG,
         replacementText,
         document.uri,
         diagnostic.range

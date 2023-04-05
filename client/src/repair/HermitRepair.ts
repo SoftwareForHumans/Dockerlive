@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from "fs";
 import {
   CancellationToken,
   CodeAction,
@@ -11,9 +10,15 @@ import {
 } from "vscode";
 import { createAction, getNewline } from "./common";
 
+const HERMIT_DEPS_MSG = "Add command to install detected dependencies.";
+const HERMIT_DEPS_CODE = "R:HERMITDEPS";
+
+const HERMIT_PORTS_MSG = "Add/update command to expose detected ports.";
+const HERMIT_PORTS_CODE = "R:HERMITPORTS";
+
 export default class HermitRepair implements CodeActionProvider<CodeAction> {
   hermitDockerfileContent: string;
-  
+
   setHermitDockerfileContent(content: string) {
     this.hermitDockerfileContent = content;
   }
@@ -30,12 +35,16 @@ export default class HermitRepair implements CodeActionProvider<CodeAction> {
       if (!this.hermitDockerfileContent) continue;
 
       switch (diagnostic.code) {
-        case "R:HERMITDEPS":
+        case HERMIT_DEPS_CODE:
           actions.push(
-            getDependenciesAction(this.hermitDockerfileContent, diagnostic, document)
+            getDependenciesAction(
+              this.hermitDockerfileContent,
+              diagnostic,
+              document
+            )
           );
           break;
-        case "R:HERMITPORTS":
+        case HERMIT_PORTS_CODE:
           actions.push(
             getPortsAction(this.hermitDockerfileContent, diagnostic, document)
           );
@@ -67,7 +76,7 @@ function getPortsAction(
   });
 
   const action = createAction(
-    "Add/update command to expose detected ports.",
+    HERMIT_PORTS_MSG,
     replacementText,
     document.uri,
     diagnostic.range
@@ -106,7 +115,7 @@ function getDependenciesAction(
   const replacementText = newlineChar + contentToBeCopied + newlineChar;
 
   const action = createAction(
-    "Add command to install detected dependencies.",
+    HERMIT_DEPS_MSG,
     replacementText,
     document.uri,
     range
