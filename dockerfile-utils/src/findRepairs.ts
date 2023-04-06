@@ -486,7 +486,7 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
       if (argValue === "-f") quietFlagIndex = index;
     });
 
-    if (quietFlagIndex <= curlArgIndex) return;
+    if (quietFlagIndex <= curlArgIndex && quietFlagIndex > -1) return;
 
     if (curlArgIndex === -1) return;
 
