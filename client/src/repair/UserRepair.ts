@@ -12,7 +12,7 @@ import {
   getNewline,
   getNumberOfCharsForNewline,
   isNodeProject,
-} from "./common";
+} from "./utils";
 
 const NO_ROOT_USER_MSG = "Add instruction to change user.";
 const NO_ROOT_USER_CODE = "R:NOROOTUSER";

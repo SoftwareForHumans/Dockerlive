@@ -7,7 +7,7 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction, getNewline } from "./common";
+import { createAction, getNewline } from "./utils";
 
 const NO_ROOT_DIR_MSG = "Use WORKDIR to change the working directory.";
 const NO_ROOT_DIR_CODE = "R:NOROOTDIR";

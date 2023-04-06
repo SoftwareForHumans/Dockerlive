@@ -12,7 +12,7 @@ import {
   getNewline,
   getNumberOfCharsForNewline,
   isNodeProject,
-} from "./common";
+} from "./utils";
 
 const SINGLE_COPY_MSG = "Add a second COPY instruction.";
 const SINGLE_COPY_CODE = "R:SINGLECOPY";

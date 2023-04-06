@@ -7,7 +7,7 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction, isNodeProject } from "./common";
+import { createAction, isNodeProject } from "./utils";
 
 const NO_IMAGE_PIN_MSG = "Pin image version.";
 const NO_IMAGE_PIN_CODE = "R:NOIMAGEPIN";

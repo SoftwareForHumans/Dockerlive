@@ -1,29 +1,18 @@
-import {
-  Argument,
-  Dockerfile,
-  DockerfileParser,
-  Instruction,
-} from "dockerfile-ast";
-import { existsSync, readFileSync, unlinkSync } from "fs";
+import { Argument, Dockerfile, Instruction } from "dockerfile-ast";
 import {
   Diagnostic,
   Range,
-  DiagnosticSeverity,
 } from "vscode-languageserver-types";
 
-let hermitDockerfileContent: string = null;
+import checkHermitAlternative from "./hermit";
+import {
+  createRepairDiagnostic,
+  getRangeAfterFrom,
+  getRangeBeforeEnd,
+} from "./utils";
 
 const NO_ROOT_USER_MSG = "A user other than root should be used.";
 const NO_ROOT_USER_SUFFIX = "NOROOTUSER";
-
-const HERMIT_PORTS_MSG_1 = "Some ports that could be exposed were detected.";
-const HERMIT_PORTS_MSG_2 =
-  "Some mistakes were detected with the ports being exposed.";
-const HERMIT_PORTS_SUFFIX = "HERMITPORTS";
-
-const HERMIT_DEPS_MSG =
-  "Some dependencies that are missing from this Dockerfile have been detected.";
-const HERMIT_DEPS_SUFFIX = "HERMITDEPS";
 
 const NO_ROOT_DIR_MSG = "A working directory other than / should be used.";
 const NO_ROOT_DIR_SUFFIX = "NOROOTDIR";
@@ -117,200 +106,6 @@ function checkUser(dockerfile: Dockerfile): Diagnostic[] {
   return problems;
 }
 
-function checkHermitAlternative(dockerfile: Dockerfile): Diagnostic[] {
-  const problems: Diagnostic[] = [];
-
-  const hermitDockerfilePath = "Dockerfile.hermit";
-  const hermitDockerfileExists = existsSync(hermitDockerfilePath);
-
-  if (hermitDockerfileExists) {
-    hermitDockerfileContent = readFileSync(hermitDockerfilePath).toString();
-    unlinkSync(hermitDockerfilePath);
-  } else if (!hermitDockerfileExists && hermitDockerfileContent === null)
-    return [];
-
-  const hermitDockerfile = DockerfileParser.parse(hermitDockerfileContent);
-
-  const dependenciesProblem = checkHermitDependencies(
-    dockerfile,
-    hermitDockerfile
-  );
-  if (dependenciesProblem !== null) problems.push(dependenciesProblem);
-
-  const portsProblem = checkHermitPorts(dockerfile, hermitDockerfile);
-  if (portsProblem !== null) problems.push(portsProblem);
-
-  return problems;
-}
-
-function checkHermitPorts(
-  dockerfile: Dockerfile,
-  hermitDockerfile: Dockerfile
-): Diagnostic | null {
-  const originalExposeInstructions = dockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "EXPOSE");
-
-  const hermitExposeInstructions = hermitDockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "EXPOSE");
-
-  if (
-    hermitExposeInstructions.length > 0 &&
-    originalExposeInstructions.length === 0
-  ) {
-    const range = getRangeBeforeEnd(dockerfile);
-    if (!range) return null;
-
-    return createRepairDiagnostic(
-      range,
-      HERMIT_PORTS_MSG_1,
-      HERMIT_PORTS_SUFFIX
-    );
-  } else if (
-    hermitExposeInstructions.length > 0 &&
-    originalExposeInstructions.length > 0
-  ) {
-    const originalPorts = originalExposeInstructions.map((instruction) => {
-      const args = instruction.getArguments();
-      if (!args || args.length === 0) return;
-      return args[0].getValue();
-    });
-    if (
-      !originalPorts ||
-      originalPorts.length === 0 ||
-      originalPorts.includes(undefined)
-    )
-      return null;
-
-    const hermitPorts = hermitExposeInstructions.map((instruction) => {
-      const args = instruction.getArguments();
-      if (!args || args.length === 0) return;
-      return args[0].getValue();
-    });
-    if (
-      !hermitPorts ||
-      hermitPorts.length === 0 ||
-      hermitPorts.includes(undefined)
-    )
-      return null;
-
-    let needToRepair = false;
-
-    hermitPorts.forEach((port) => {
-      if (!port) return;
-      if (!originalPorts.includes(port)) needToRepair = true;
-    });
-
-    originalPorts.forEach((port) => {
-      if (!port) return;
-      if (!hermitPorts.includes(port)) needToRepair = true;
-    });
-
-    const start = originalExposeInstructions[0].getRange().start;
-
-    const end =
-      originalExposeInstructions[
-        originalExposeInstructions.length - 1
-      ].getRange().end;
-
-    const range = {
-      start,
-      end,
-    };
-
-    if (needToRepair)
-      return createRepairDiagnostic(
-        range,
-        HERMIT_PORTS_MSG_2,
-        HERMIT_PORTS_SUFFIX
-      );
-  }
-
-  return null;
-}
-
-function getRangeBeforeEnd(dockerfile: Dockerfile): Range | null {
-  const instructions = dockerfile.getInstructions();
-
-  if (!instructions || instructions.length === 0) return null;
-
-  const finalInstruction = instructions[instructions.length - 1];
-
-  const line = finalInstruction.getRange().start.line - 1;
-
-  const range = {
-    start: { character: 0, line },
-    end: { character: 3, line },
-  };
-
-  return range;
-}
-
-function checkHermitDependencies(
-  dockerfile: Dockerfile,
-  hermitDockerfile: Dockerfile
-): Diagnostic | null {
-  const distro = getDistroUsed(dockerfile);
-
-  if (distro !== "") {
-    const packageManagerKeyword = distro === "debian" ? "apt-get" : "apk";
-
-    const hermitPkgInstructions = hermitDockerfile
-      .getInstructions()
-      .filter((instruction) =>
-        instruction
-          .getArguments()
-          .map((arg) => arg.getValue())
-          .includes(packageManagerKeyword)
-      );
-
-    const originalPkgInstructions = dockerfile
-      .getInstructions()
-      .filter((instruction) =>
-        instruction
-          .getArguments()
-          .map((arg) => arg.getValue())
-          .includes(packageManagerKeyword)
-      );
-
-    const range = getRangeAfterFrom(dockerfile);
-
-    if (
-      range &&
-      hermitPkgInstructions.length > 0 &&
-      originalPkgInstructions.length === 0
-    ) {
-      return createRepairDiagnostic(range, HERMIT_DEPS_MSG, HERMIT_DEPS_SUFFIX);
-    }
-  }
-
-  return null;
-}
-
-function getDistroUsed(dockerfile: Dockerfile): string {
-  const froms = dockerfile.getFROMs();
-
-  if (!froms || froms.length === 0) return "debian";
-
-  const imageTag = froms[0].getImageTag();
-
-  const hasAlpineInImageTag = imageTag !== null && imageTag.includes("alpine");
-
-  if (hasAlpineInImageTag) return "alpine";
-
-  const apkMentions = dockerfile.getInstructions().filter((instruction) =>
-    instruction
-      .getArguments()
-      .map((arg) => arg.getValue())
-      .includes("apk")
-  );
-
-  if (apkMentions && apkMentions.length > 0) return "alpine";
-
-  return "debian";
-}
-
 function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
@@ -326,21 +121,6 @@ function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
     );
 
   return problems;
-}
-
-function getRangeAfterFrom(dockerfile: Dockerfile): Range | null {
-  const froms = dockerfile.getFROMs();
-
-  if (!froms || froms.length === 0) return null;
-
-  const fromLine = froms[0].getRange().start.line;
-
-  const range = {
-    start: { character: 0, line: fromLine + 1 },
-    end: { character: 3, line: fromLine + 1 },
-  };
-
-  return range;
 }
 
 function checkCopys(dockerfile: Dockerfile): Diagnostic[] {
@@ -738,18 +518,4 @@ function checkMissingElements(
     );
 
   return problems;
-}
-
-function createRepairDiagnostic(
-  range: Range,
-  message: string,
-  codeSuffix: string
-): Diagnostic {
-  return {
-    range,
-    message,
-    code: "R:" + codeSuffix,
-    severity: DiagnosticSeverity.Warning,
-    source: "repair-module",
-  };
 }

@@ -7,12 +7,10 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import {
-  createAction,
-} from "./common";
+import { createAction } from "./utils";
 
-const NO_HTTP_URL_MSG = "Change the URL to use HTTPS."
-const NO_HTTP_URL_CODE = "R:NOHTTPURL"
+const NO_HTTP_URL_MSG = "Change the URL to use HTTPS.";
+const NO_HTTP_URL_CODE = "R:NOHTTPURL";
 
 export default class UrlRepair implements CodeActionProvider<CodeAction> {
   provideCodeActions(

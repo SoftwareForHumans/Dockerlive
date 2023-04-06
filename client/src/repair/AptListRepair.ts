@@ -7,7 +7,7 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction } from "./common";
+import { createAction } from "./utils";
 
 const APT_LIST_MSG =
   "Add command to remove APT lists after installing packages.";

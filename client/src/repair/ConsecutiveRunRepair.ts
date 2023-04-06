@@ -7,10 +7,10 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction, getNewline, getNumberOfCharsForNewline } from "./common";
+import { createAction, getNewline, getNumberOfCharsForNewline } from "./utils";
 
-const CONSECUTIVE_RUN_MSG = "Merge consecutive RUN instructions."
-const CONSECUTIVE_RUN_CODE = "R:CONSECUTIVERUN"
+const CONSECUTIVE_RUN_MSG = "Merge consecutive RUN instructions.";
+const CONSECUTIVE_RUN_CODE = "R:CONSECUTIVERUN";
 
 export default class ConsecutiveRunRepair
   implements CodeActionProvider<CodeAction>
@@ -40,7 +40,7 @@ export default class ConsecutiveRunRepair
         " && " +
         instructionsText.substring(secondRunKeywordPosition + 4)
       ).replace(newlineChar, "");
-      
+
       const action = createAction(
         CONSECUTIVE_RUN_MSG,
         replacementText,

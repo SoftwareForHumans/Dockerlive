@@ -8,9 +8,9 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction, getNewline } from "./common";
+import { createAction, getNewline } from "./utils";
 
-const HERMIT_DEPS_MSG = "Add command to install detected dependencies.";
+const HERMIT_DEPS_MSG = "Add/update command to install detected dependencies.";
 const HERMIT_DEPS_CODE = "R:HERMITDEPS";
 
 const HERMIT_PORTS_MSG = "Add/update command to expose detected ports.";
@@ -99,16 +99,15 @@ function getDependenciesAction(
 
   const runIndex = contentUntilKeyword.lastIndexOf("RUN");
 
-  const runAfterIndex = fileContent.indexOf("RUN", runIndex + 1);
+  const offset = runIndex + 3;
 
-  const contentToBeCopied = fileContent.substring(runIndex, runAfterIndex);
+  let afterIndex =
+    fileContent.slice(offset).search(/[A-Z]/);
 
-  const firstCharacterOfLinePosition = diagnostic.range.start;
+  if (afterIndex === -1) afterIndex = fileContent.length;
+  else afterIndex += offset;
 
-  const range = new Range(
-    firstCharacterOfLinePosition,
-    firstCharacterOfLinePosition
-  );
+  const contentToBeCopied = fileContent.substring(runIndex, afterIndex);
 
   const newlineChar = getNewline();
 
@@ -118,7 +117,7 @@ function getDependenciesAction(
     HERMIT_DEPS_MSG,
     replacementText,
     document.uri,
-    range
+    diagnostic.range
   );
 
   return action;

@@ -7,7 +7,7 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction } from "./common";
+import { createAction } from "./utils";
 
 const NO_INSTALL_RECOMMENDS_MSG =
   "Add --no-install-recommends option to the apt-get install command.";

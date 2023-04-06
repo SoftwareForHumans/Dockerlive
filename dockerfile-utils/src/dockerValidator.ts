@@ -34,7 +34,7 @@ import { ValidationCode, ValidationSeverity, ValidatorSettings } from "./main";
 import { DynamicAnalysis } from "./dynamicAnalysis";
 import Dockerode from "dockerode";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import checkRepairableProblems from "./findRepairs";
+import checkRepairableProblems from "./repair/main";
 
 export const KEYWORDS = [
   "ADD",
