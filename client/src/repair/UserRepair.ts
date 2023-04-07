@@ -107,7 +107,9 @@ function getCopyText(document: TextDocument): string {
 
   const isNode = isNodeProject(document);
   const userText = isNode ? "node" : "python";
-  const chownText = `--chown=${userText}:${userText}`;
+  let chownText = `--chown=${userText}:${userText}`;
+
+  if (copyArgs.includes("--chown")) chownText = "";
 
   return newlineChar + "COPY " + chownText + copyArgs + newlineChar;
 }
