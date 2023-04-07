@@ -79,41 +79,47 @@ export default function checkRepairableProblems(
   problems.push(...checkApkProblems(dockerfile));
   problems.push(...checkVersionPinning(dockerfile));
   problems.push(...checkCopys(dockerfile));
-  problems.push(...checkWorkDir(dockerfile));
-  problems.push(...checkUser(dockerfile));
+  problems.push(
+    ...checkForInstructionPresence(
+      dockerfile,
+      "WORKDIR",
+      true,
+      NO_ROOT_DIR_MSG,
+      NO_ROOT_DIR_SUFFIX
+    )
+  );
+  problems.push(
+    ...checkForInstructionPresence(
+      dockerfile,
+      "USER",
+      false,
+      NO_ROOT_USER_MSG,
+      NO_ROOT_USER_SUFFIX
+    )
+  );
   problems.push(...checkHermitAlternative(dockerfile));
 
   return problems;
 }
 
-function checkUser(dockerfile: Dockerfile): Diagnostic[] {
+function checkForInstructionPresence(
+  dockerfile: Dockerfile,
+  instructionName: string,
+  rangeAtBeginning: boolean,
+  message: string,
+  suffix: string
+): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const userInstructions = getInstructionsWithKeyword(dockerfile, "USER");
+  const instructions = getInstructionsWithKeyword(dockerfile, instructionName);
 
-  if (userInstructions.length === 0) {
-    const range = getRangeBeforeEnd(dockerfile);
+  if (instructions.length === 0) {
+    const range = rangeAtBeginning
+      ? getRangeAfterFrom(dockerfile)
+      : getRangeBeforeEnd(dockerfile);
 
-    if (range)
-      problems.push(
-        createRepairDiagnostic(range, NO_ROOT_USER_MSG, NO_ROOT_USER_SUFFIX)
-      );
+    if (range) problems.push(createRepairDiagnostic(range, message, suffix));
   }
-
-  return problems;
-}
-
-function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
-  const problems: Diagnostic[] = [];
-
-  const workdirInstructions = getInstructionsWithKeyword(dockerfile, "WORKDIR");
-
-  const range = getRangeAfterFrom(dockerfile);
-
-  if (workdirInstructions.length === 0 && range)
-    problems.push(
-      createRepairDiagnostic(range, NO_ROOT_DIR_MSG, NO_ROOT_DIR_SUFFIX)
-    );
 
   return problems;
 }
@@ -191,47 +197,33 @@ function checkApkProblems(dockerfile: Dockerfile): Diagnostic[] {
 function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const runInstructions = getInstructionsWithKeyword(dockerfile, "RUN");
+  const runInstructions = getRunInstructionsWithArg(dockerfile, "curl");
 
   const curlInstructions = [];
 
-  runInstructions
-    .filter(
-      (instruction) =>
-        instruction
-          .getArguments()
-          .map((arg) => arg.getValue())
-          .find((argValue) => argValue === "curl") !== undefined
-    )
-    .forEach((instruction) => {
-      const instructionComponents = [instruction.getKeyword()].concat(
-        instruction.getArguments().map((arg) => arg.getValue())
-      );
-      for (let i = 1; i < instructionComponents.length; i++) {
-        const component = instructionComponents[i];
-        const previousComponent = instructionComponents[i - 1];
+  runInstructions.forEach((instruction) => {
+    const instructionComponents = [instruction.getKeyword()].concat(
+      instruction.getArguments().map((arg) => arg.getValue())
+    );
+    for (let i = 1; i < instructionComponents.length; i++) {
+      const component = instructionComponents[i];
+      const previousComponent = instructionComponents[i - 1];
 
-        if (!component || !previousComponent) continue;
+      if (!component || !previousComponent) continue;
 
-        const currentComponentIsCurl = component === "curl";
-        const previousComponentIsAnd = previousComponent === "&&";
-        const previousComponentIsRun = previousComponent === "RUN";
-        const currentComponentIsNotArgOfAnotherCommand =
-          previousComponentIsAnd || previousComponentIsRun;
+      const currentComponentIsCurl = component === "curl";
+      const previousComponentIsAnd = previousComponent === "&&";
+      const previousComponentIsRun = previousComponent === "RUN";
+      const currentComponentIsNotArgOfAnotherCommand =
+        previousComponentIsAnd || previousComponentIsRun;
 
-        if (currentComponentIsCurl && !currentComponentIsNotArgOfAnotherCommand)
-          return;
-      }
-      curlInstructions.push(instruction);
-    });
+      if (currentComponentIsCurl && !currentComponentIsNotArgOfAnotherCommand)
+        return;
+    }
+    curlInstructions.push(instruction);
+  });
 
-  const wgetInstructions = runInstructions.filter(
-    (instruction) =>
-      instruction
-        .getArguments()
-        .map((arg) => arg.getValue())
-        .find((argValue) => argValue === "wget") !== undefined
-  );
+  const wgetInstructions = getRunInstructionsWithArg(dockerfile, "wget");
 
   curlInstructions.forEach((instruction: Instruction) => {
     const args = instruction.getArguments();
