@@ -38,7 +38,7 @@ export default class WorkDirRepair implements CodeActionProvider<CodeAction> {
       const action = createAction(
         NO_ROOT_DIR_MSG,
         replacementText,
-        document.uri,
+        document,
         range
       );
 

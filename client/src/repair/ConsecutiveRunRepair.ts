@@ -44,7 +44,7 @@ export default class ConsecutiveRunRepair
       const action = createAction(
         CONSECUTIVE_RUN_MSG,
         replacementText,
-        document.uri,
+        document,
         diagnostic.range
       );
       actions.push(action);

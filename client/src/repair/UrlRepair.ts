@@ -31,7 +31,7 @@ export default class UrlRepair implements CodeActionProvider<CodeAction> {
       const action = createAction(
         NO_HTTP_URL_MSG,
         replacementText,
-        document.uri,
+        document,
         diagnostic.range
       );
 

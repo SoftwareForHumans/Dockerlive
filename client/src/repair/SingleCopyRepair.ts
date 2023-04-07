@@ -89,7 +89,7 @@ export default class SingleCopyRepair
       const action = createAction(
         SINGLE_COPY_MSG,
         replacementText,
-        document.uri,
+        document,
         rangeToBeReplaced
       );
 

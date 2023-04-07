@@ -8,13 +8,22 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction, getNewline } from "./utils";
+import {
+  createAction,
+  getInstructionText,
+  getNewline,
+  isNodeProject,
+} from "./utils";
 
 const HERMIT_DEPS_MSG = "Add/update command to install detected dependencies.";
 const HERMIT_DEPS_CODE = "R:HERMITDEPS";
 
 const HERMIT_PORTS_MSG = "Add/update command to expose detected ports.";
 const HERMIT_PORTS_CODE = "R:HERMITPORTS";
+
+const HERMIT_LANG_DEPS_MSG =
+  "Add command to install the required dependencies.";
+const HERMIT_LANG_DEPS_CODE = "R:HERMITLANGDEPS";
 
 export default class HermitRepair implements CodeActionProvider<CodeAction> {
   hermitDockerfileContent: string;
@@ -49,6 +58,14 @@ export default class HermitRepair implements CodeActionProvider<CodeAction> {
             getPortsAction(this.hermitDockerfileContent, diagnostic, document)
           );
           break;
+        case HERMIT_LANG_DEPS_CODE:
+          actions.push(
+            getLangDepsAction(
+              this.hermitDockerfileContent,
+              diagnostic,
+              document
+            )
+          );
         default:
           continue;
       }
@@ -56,6 +73,35 @@ export default class HermitRepair implements CodeActionProvider<CodeAction> {
 
     return actions;
   }
+}
+
+function getLangDepsAction(
+  fileContent: string,
+  diagnostic: Diagnostic,
+  document: TextDocument
+): CodeAction {
+  const isNode = isNodeProject(document);
+
+  const newlineChar = getNewline();
+  let replacementText = newlineChar;
+
+  if (isNode) {
+    replacementText =
+      getInstructionText(fileContent, "RUN", "npm") + newlineChar;
+  } else {
+    replacementText =
+      getInstructionText(fileContent, "RUN", "pip3") +
+      newlineChar +
+      getInstructionText(fileContent, "RUN", "pip") +
+      newlineChar;
+  }
+
+  return createAction(
+    HERMIT_LANG_DEPS_MSG,
+    replacementText,
+    document,
+    diagnostic.range
+  );
 }
 
 function getPortsAction(
@@ -78,7 +124,7 @@ function getPortsAction(
   const action = createAction(
     HERMIT_PORTS_MSG,
     replacementText,
-    document.uri,
+    document,
     diagnostic.range
   );
 
@@ -93,21 +139,11 @@ function getDependenciesAction(
   const distro = getDistroUsed(fileContent);
   const packageManagerKeyword = distro === "alpine" ? "apk" : "apt-get";
 
-  const keywordIndex = fileContent.indexOf(packageManagerKeyword);
-
-  const contentUntilKeyword = fileContent.substring(0, keywordIndex);
-
-  const runIndex = contentUntilKeyword.lastIndexOf("RUN");
-
-  const offset = runIndex + 3;
-
-  let afterIndex =
-    fileContent.slice(offset).search(/[A-Z]/);
-
-  if (afterIndex === -1) afterIndex = fileContent.length;
-  else afterIndex += offset;
-
-  const contentToBeCopied = fileContent.substring(runIndex, afterIndex);
+  const contentToBeCopied = getInstructionText(
+    fileContent,
+    "RUN",
+    packageManagerKeyword
+  );
 
   const newlineChar = getNewline();
 
@@ -116,7 +152,7 @@ function getDependenciesAction(
   const action = createAction(
     HERMIT_DEPS_MSG,
     replacementText,
-    document.uri,
+    document,
     diagnostic.range
   );
 

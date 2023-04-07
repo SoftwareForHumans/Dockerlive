@@ -90,7 +90,7 @@ export default class SimpleRepair implements CodeActionProvider<CodeAction> {
         createAction(
           actionTitle,
           replacementText,
-          document.uri,
+          document,
           diagnostic.range
         )
       );

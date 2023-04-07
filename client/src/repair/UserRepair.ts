@@ -40,7 +40,7 @@ export default class UserRepair implements CodeActionProvider<CodeAction> {
           createAction(
             actionTitle,
             replacementText,
-            document.uri,
+            document,
             diagnostic.range
           )
         );
@@ -60,7 +60,7 @@ export default class UserRepair implements CodeActionProvider<CodeAction> {
         const range = new Range(startPosition, endPosition);
 
         actions.push(
-          createAction(actionTitle, replacementText, document.uri, range)
+          createAction(actionTitle, replacementText, document, range)
         );
       }
     }

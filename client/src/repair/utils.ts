@@ -5,6 +5,7 @@ import {
   WorkspaceEdit,
   Range,
   TextDocument,
+  Position,
 } from "vscode";
 import * as os from "os";
 
@@ -27,13 +28,15 @@ export function isPythonProject(document: TextDocument): boolean {
 export function createAction(
   actionTitle: string,
   replacementText: string,
-  uri: Uri,
-  processedRange: Range
+  document: TextDocument,
+  range: Range
 ): CodeAction {
   const action = new CodeAction(actionTitle, CodeActionKind.QuickFix);
 
+  const processedRange = processRange(document, range);
+
   action.edit = new WorkspaceEdit();
-  action.edit.replace(uri, processedRange, replacementText);
+  action.edit.replace(document.uri, processedRange, replacementText);
   action.kind = CodeActionKind.QuickFix;
 
   return action;
@@ -49,4 +52,52 @@ export function getNumberOfCharsForNewline(): number {
   const systemType = os.type();
   if (systemType.includes("Windows")) return 2;
   return 1;
+}
+
+export function getInstructionText(
+  fileContent: string,
+  instructionName: string,
+  keyword: string
+): string {
+  const keywordIndex = fileContent.indexOf(keyword);
+
+  if (keywordIndex === -1) return "";
+
+  const contentUntilKeyword = fileContent.substring(0, keywordIndex);
+
+  const instructionStartIndex =
+    contentUntilKeyword.lastIndexOf(instructionName);
+
+  const offset = instructionStartIndex + instructionName.length;
+
+  let instructionEndIndex = fileContent.slice(offset).search(/[A-Z]/);
+
+  if (instructionEndIndex === -1) instructionEndIndex = fileContent.length;
+  else instructionEndIndex += offset;
+
+  const text = fileContent.substring(
+    instructionStartIndex,
+    instructionEndIndex
+  );
+
+  return cleanupText(text);
+}
+
+export function processRange(document: TextDocument, range: Range): Range {
+  const textInRange = document.getText(range);
+
+  if (textInRange.trim() !== "") {
+    const line = range.start.line;
+    const character = 0;
+    const pos = new Position(line, character);
+    return new Range(pos, pos);
+  }
+
+  return range;
+}
+
+function cleanupText(text: string): string {
+  const newlineChar = getNewline();
+
+  return text.replace(newlineChar + "#", "").trim();
 }

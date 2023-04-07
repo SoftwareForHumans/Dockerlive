@@ -32,7 +32,7 @@ export default class AptListRepair implements CodeActionProvider<CodeAction> {
       const action = createAction(
         APT_LIST_MSG,
         replacementText,
-        document.uri,
+        document,
         diagnostic.range
       );
 

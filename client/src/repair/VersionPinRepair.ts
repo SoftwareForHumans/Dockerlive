@@ -31,7 +31,7 @@ export default class VersionPinRepair
       const action = createAction(
         NO_IMAGE_PIN_MSG,
         replacementText,
-        document.uri,
+        document,
         diagnostic.range
       );
 
