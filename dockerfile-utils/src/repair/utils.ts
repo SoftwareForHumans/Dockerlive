@@ -45,6 +45,23 @@ export function getDistroUsed(dockerfile: Dockerfile): string {
   return "debian";
 }
 
+export function getRangeAfterCopy(dockerfile: Dockerfile): Range | null {
+  const copys = dockerfile.getCOPYs();
+
+  if (!copys || copys.length === 0) return null;
+
+  const copyLine = copys[0].getRange().start.line;
+
+  const rangeLine = copyLine + 1;
+
+  const range = {
+    start: { character: 0, line: rangeLine },
+    end: { character: 3, line: rangeLine },
+  };
+
+  return range;
+}
+
 export function getRangeAfterFrom(dockerfile: Dockerfile): Range | null {
   const froms = dockerfile.getFROMs();
 
@@ -60,6 +77,18 @@ export function getRangeAfterFrom(dockerfile: Dockerfile): Range | null {
   return range;
 }
 
+export function getRunInstructionsWithArg(
+  dockerfile: Dockerfile,
+  arg: string
+): Instruction[] {
+  return getInstructionsWithKeyword(dockerfile, "RUN").filter((instruction) =>
+    instruction
+      .getArguments()
+      .map((argument) => argument.getValue())
+      .includes(arg)
+  );
+}
+
 export function getInstructionsWithKeyword(
   dockerfile: Dockerfile,
   keyword: string
@@ -67,6 +96,18 @@ export function getInstructionsWithKeyword(
   return dockerfile
     .getInstructions()
     .filter((instruction) => instruction.getKeyword() === keyword);
+}
+
+export function getProjectLang(dockerfile: Dockerfile): string {
+  const froms = dockerfile.getFROMs();
+
+  if (!froms || froms.length === 0) return "node";
+
+  const image = froms[0].getImage();
+
+  if (image === "python") return "python";
+
+  return "node";
 }
 
 export function createRepairDiagnostic(

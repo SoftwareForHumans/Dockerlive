@@ -4,8 +4,11 @@ import { Diagnostic } from "vscode-languageserver-types";
 import {
   createRepairDiagnostic,
   getDistroUsed,
+  getProjectLang,
+  getRangeAfterCopy,
   getRangeAfterFrom,
   getRangeBeforeEnd,
+  getRunInstructionsWithArg,
 } from "./utils";
 
 const HERMIT_PORTS_MSG_1 = "Some ports that could be exposed were detected.";
@@ -18,6 +21,10 @@ const HERMIT_DEPS_MSG_1 =
 const HERMIT_DEPS_MSG_2 =
   "The dependencies being installed don't match the detected ones.";
 const HERMIT_DEPS_SUFFIX = "HERMITDEPS";
+
+const HERMIT_LANG_DEPS_MSG =
+  "Some commands that are needed to install dependencies are missing.";
+const HERMIT_LANG_DEPS_SUFFIX = "HERMITLANGDEPS";
 
 let hermitDockerfileContent: string = null;
 
@@ -46,7 +53,48 @@ export default function checkHermitAlternative(
   const portsProblem = checkHermitPorts(dockerfile, hermitDockerfile);
   if (portsProblem !== null) problems.push(portsProblem);
 
+  const languageDepsProblem = checkHermitLanguageDeps(
+    dockerfile,
+    hermitDockerfile
+  );
+  if (languageDepsProblem !== null) problems.push(languageDepsProblem);
+
   return problems;
+}
+
+function checkHermitLanguageDeps(
+  dockerfile: Dockerfile,
+  hermitDockerfile: Dockerfile
+): Diagnostic | null {
+  const lang = getProjectLang(dockerfile);
+
+  const languageKeywords = lang === "node" ? ["npm"] : ["pip", "pip3"];
+
+  const originalInstructions: Instruction[] = [];
+
+  const hermitInstructions: Instruction[] = [];
+
+  languageKeywords.forEach((keyword) => {
+    originalInstructions.push(
+      ...getRunInstructionsWithArg(dockerfile, keyword)
+    );
+    hermitInstructions.push(
+      ...getRunInstructionsWithArg(hermitDockerfile, keyword)
+    );
+  });
+
+  const range = getRangeAfterCopy(dockerfile);
+
+  if (!range) return null;
+
+  if (originalInstructions.length === 0 && hermitInstructions.length > 0)
+    return createRepairDiagnostic(
+      range,
+      HERMIT_LANG_DEPS_MSG,
+      HERMIT_LANG_DEPS_SUFFIX
+    );
+
+  return null;
 }
 
 function checkHermitPorts(
@@ -240,7 +288,7 @@ function processDeps(args: string[], keyword: string): string[] {
 
     if (arg === "&&") gatheringDeps = false;
 
-	if (arg.startsWith("-")) continue;
+    if (arg.startsWith("-")) continue;
 
     if (gatheringDeps) deps.push(arg);
 
