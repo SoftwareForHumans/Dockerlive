@@ -60,7 +60,7 @@
 			{
 				"command": "dockerlive.generateAlternativeWithHermit",
 				"category": "Dockerlive",
-				"title": "Generate an alternative Dockerfile using Hermit",
+				"title": "Generate an alternative Dockerfile",
 				"icon": {
 					"light": "./resources/icons/hermit/hermit-crab.png",
 					"dark": "./resources/icons/hermit/hermit-crab.png"
@@ -84,7 +84,7 @@
 			{
 				"command": "dockerlive.generateWithHermit",
 				"category": "Dockerlive",
-				"title": "Generate a Dockerfile using Hermit"
+				"title": "Generate a Dockerfile"
 			}
 		],
 		"menus": {
