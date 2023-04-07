@@ -4,6 +4,7 @@ import { Diagnostic } from "vscode-languageserver-types";
 import {
   createRepairDiagnostic,
   getDistroUsed,
+  getInstructionsWithKeyword,
   getProjectLang,
   getRangeAfterCopy,
   getRangeAfterFrom,
@@ -101,13 +102,15 @@ function checkHermitPorts(
   dockerfile: Dockerfile,
   hermitDockerfile: Dockerfile
 ): Diagnostic | null {
-  const originalExposeInstructions = dockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "EXPOSE");
+  const originalExposeInstructions = getInstructionsWithKeyword(
+    dockerfile,
+    "EXPOSE"
+  );
 
-  const hermitExposeInstructions = hermitDockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "EXPOSE");
+  const hermitExposeInstructions = getInstructionsWithKeyword(
+    hermitDockerfile,
+    "EXPOSE"
+  );
 
   if (
     hermitExposeInstructions.length > 0 &&
@@ -193,23 +196,15 @@ function checkHermitDependencies(
   if (distro !== "") {
     const packageManagerKeyword = distro === "debian" ? "apt-get" : "apk";
 
-    const hermitPkgInstructions = hermitDockerfile
-      .getInstructions()
-      .filter((instruction) =>
-        instruction
-          .getArguments()
-          .map((arg) => arg.getValue())
-          .includes(packageManagerKeyword)
-      );
+    const originalPkgInstructions = getRunInstructionsWithArg(
+      dockerfile,
+      packageManagerKeyword
+    );
 
-    const originalPkgInstructions = dockerfile
-      .getInstructions()
-      .filter((instruction) =>
-        instruction
-          .getArguments()
-          .map((arg) => arg.getValue())
-          .includes(packageManagerKeyword)
-      );
+    const hermitPkgInstructions = getRunInstructionsWithArg(
+      hermitDockerfile,
+      packageManagerKeyword
+    );
 
     if (
       hermitPkgInstructions.length > 0 &&

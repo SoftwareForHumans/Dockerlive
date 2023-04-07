@@ -1,14 +1,13 @@
 import { Argument, Dockerfile, Instruction } from "dockerfile-ast";
-import {
-  Diagnostic,
-  Range,
-} from "vscode-languageserver-types";
+import { Diagnostic, Range } from "vscode-languageserver-types";
 
 import checkHermitAlternative from "./hermit";
 import {
   createRepairDiagnostic,
+  getInstructionsWithKeyword,
   getRangeAfterFrom,
   getRangeBeforeEnd,
+  getRunInstructionsWithArg,
 } from "./utils";
 
 const NO_ROOT_USER_MSG = "A user other than root should be used.";
@@ -90,9 +89,7 @@ export default function checkRepairableProblems(
 function checkUser(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const userInstructions = dockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "USER");
+  const userInstructions = getInstructionsWithKeyword(dockerfile, "USER");
 
   if (userInstructions.length === 0) {
     const range = getRangeBeforeEnd(dockerfile);
@@ -109,9 +106,7 @@ function checkUser(dockerfile: Dockerfile): Diagnostic[] {
 function checkWorkDir(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const workdirInstructions = dockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "WORKDIR");
+  const workdirInstructions = getInstructionsWithKeyword(dockerfile, "WORKDIR");
 
   const range = getRangeAfterFrom(dockerfile);
 
@@ -164,16 +159,7 @@ function checkVersionPinning(dockerfile: Dockerfile): Diagnostic[] {
 function checkApkProblems(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const apkInstructions = dockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "RUN")
-    .filter(
-      (instruction) =>
-        instruction
-          .getArguments()
-          .map((arg) => arg.getValue())
-          .find((argValue) => argValue === "apk") !== undefined
-    );
+  const apkInstructions = getRunInstructionsWithArg(dockerfile, "apk");
 
   apkInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
@@ -205,9 +191,7 @@ function checkApkProblems(dockerfile: Dockerfile): Diagnostic[] {
 function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const runInstructions = dockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "RUN");
+  const runInstructions = getInstructionsWithKeyword(dockerfile, "RUN");
 
   const curlInstructions = [];
 
@@ -307,9 +291,7 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
 function checkCdUsage(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const runInstructions = dockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "RUN");
+  const runInstructions = getInstructionsWithKeyword(dockerfile, "RUN");
 
   runInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
@@ -411,16 +393,7 @@ function checkConsecutiveRunInstructions(dockerfile: Dockerfile): Diagnostic[] {
 function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const aptInstructions = dockerfile
-    .getInstructions()
-    .filter((instruction) => instruction.getKeyword() === "RUN")
-    .filter(
-      (instruction) =>
-        instruction
-          .getArguments()
-          .map((arg) => arg.getValue())
-          .find((argValue) => argValue === "apt-get") !== undefined
-    );
+  const aptInstructions = getRunInstructionsWithArg(dockerfile, "apt-get");
 
   if (!aptInstructions || aptInstructions.length === 0) return [];
 
