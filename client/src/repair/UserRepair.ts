@@ -14,7 +14,7 @@ import {
   isNodeProject,
 } from "./utils";
 
-const NO_ROOT_USER_MSG = "Add instruction to change user.";
+const NO_ROOT_USER_MSG = "Add instruction to change user (COPY instructions will be updated accordingly).";
 const NO_ROOT_USER_CODE = "R:NOROOTUSER";
 
 export default class UserRepair implements CodeActionProvider<CodeAction> {
