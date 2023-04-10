@@ -33,10 +33,8 @@ export function createAction(
 ): CodeAction {
   const action = new CodeAction(actionTitle, CodeActionKind.QuickFix);
 
-  const processedRange = processRange(document, range);
-
   action.edit = new WorkspaceEdit();
-  action.edit.replace(document.uri, processedRange, replacementText);
+  action.edit.replace(document.uri, range, replacementText);
   action.kind = CodeActionKind.QuickFix;
 
   return action;
