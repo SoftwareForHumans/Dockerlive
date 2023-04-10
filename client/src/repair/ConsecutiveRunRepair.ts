@@ -32,14 +32,12 @@ export default class ConsecutiveRunRepair
       const numberOfCharsForNewline = getNumberOfCharsForNewline();
       const newlineChar = getNewline();
 
-      const replacementText = (
-        instructionsText.substring(
-          0,
-          secondRunKeywordPosition - numberOfCharsForNewline
-        ) +
-        " && " +
-        instructionsText.substring(secondRunKeywordPosition + 4)
-      ).replace(newlineChar, "");
+      const replacementText =
+        instructionsText.substring(0, secondRunKeywordPosition).trimRight() +
+        " \\" +
+        newlineChar +
+        "\t&& " +
+        instructionsText.substring(secondRunKeywordPosition + 4);
 
       const action = createAction(
         CONSECUTIVE_RUN_MSG,
