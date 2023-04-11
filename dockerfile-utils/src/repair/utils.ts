@@ -46,9 +46,11 @@ export function getDistroUsed(dockerfile: Dockerfile): string {
 }
 
 export function getRangeAfterCopy(dockerfile: Dockerfile): Range | null {
+  const instructions = dockerfile.getInstructions();
   const copys = dockerfile.getCOPYs();
 
   if (!copys || copys.length === 0) return null;
+  if (!instructions || instructions.length <= 1) return null;
 
   const copyLine = copys[0].getRange().start.line;
 
@@ -63,9 +65,11 @@ export function getRangeAfterCopy(dockerfile: Dockerfile): Range | null {
 }
 
 export function getRangeAfterFrom(dockerfile: Dockerfile): Range | null {
+  const instructions = dockerfile.getInstructions();
   const froms = dockerfile.getFROMs();
 
   if (!froms || froms.length === 0) return null;
+  if (!instructions || instructions.length <= 1) return null;
 
   const fromLine = froms[0].getRange().start.line;
 
