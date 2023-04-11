@@ -8,7 +8,7 @@ import {
 export function getRangeBeforeEnd(dockerfile: Dockerfile): Range | null {
   const instructions = dockerfile.getInstructions();
 
-  if (!instructions || instructions.length === 0) return null;
+  if (!instructions || instructions.length <= 1) return null;
 
   const finalInstruction = instructions[instructions.length - 1];
 

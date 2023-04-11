@@ -515,6 +515,8 @@ export class Validator {
 
     //Checking for problems that can be repaired
     const repairableProblems = checkRepairableProblems(dockerfile);
+    console.log(repairableProblems);
+    
     if (repairableProblems.length > 0) problems.push(...repairableProblems);
 
     let foundError = false;
