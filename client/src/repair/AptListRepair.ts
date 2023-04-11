@@ -7,7 +7,7 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction } from "./utils";
+import { createAction, getNewline } from "./utils";
 
 const APT_LIST_MSG =
   "Add command to remove APT lists after installing packages.";
@@ -25,9 +25,14 @@ export default class AptListRepair implements CodeActionProvider<CodeAction> {
     for (const diagnostic of context.diagnostics) {
       if (diagnostic.code !== APT_LIST_CODE) continue;
 
+      const newlineChar = getNewline();
+
       const instructionText = document.getText(diagnostic.range);
       const replacementText =
-        instructionText + " && rm -rf /var/lib/apt/lists/*";
+        instructionText +
+        " \\" +
+        newlineChar +
+        "\t&& rm -rf /var/lib/apt/lists/*";
 
       const action = createAction(
         APT_LIST_MSG,
