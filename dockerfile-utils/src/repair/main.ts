@@ -129,6 +129,14 @@ function checkCopys(dockerfile: Dockerfile): Diagnostic[] {
 
   const copys = dockerfile.getCOPYs();
 
+  const instructions = dockerfile.getInstructions();
+
+  if (!instructions || instructions.length === 0) return problems;
+
+  const lastInstruction = instructions[instructions.length - 1];
+
+  if (lastInstruction.getKeyword() === "COPY") return problems;
+
   if (copys.length === 1)
     problems.push(
       createRepairDiagnostic(
