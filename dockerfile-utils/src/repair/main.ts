@@ -205,64 +205,47 @@ function checkApkProblems(dockerfile: Dockerfile): Diagnostic[] {
 function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
   const problems: Diagnostic[] = [];
 
-  const runInstructions = getRunInstructionsWithArg(dockerfile, "curl");
+  const curlInstructions = getRunInstructionsWithArg(dockerfile, "curl");
 
-  const curlInstructions = [];
-
-  runInstructions.forEach((instruction) => {
-    const instructionComponents = [instruction.getKeyword()].concat(
-      instruction.getArguments().map((arg) => arg.getValue())
-    );
-    for (let i = 1; i < instructionComponents.length; i++) {
-      const component = instructionComponents[i];
-      const previousComponent = instructionComponents[i - 1];
-
-      if (!component || !previousComponent) continue;
-
-      const currentComponentIsCurl = component === "curl";
-      const previousComponentIsAnd = previousComponent === "&&";
-      const previousComponentIsRun = previousComponent === "RUN";
-      const currentComponentIsNotArgOfAnotherCommand =
-        previousComponentIsAnd || previousComponentIsRun;
-
-      if (currentComponentIsCurl && !currentComponentIsNotArgOfAnotherCommand)
-        return;
-    }
-    curlInstructions.push(instruction);
-  });
-
-  const wgetInstructions = getRunInstructionsWithArg(dockerfile, "wget");
-
-  curlInstructions.forEach((instruction: Instruction) => {
-    const args = instruction.getArguments();
+  curlInstructions.forEach((instruction) => {
+    const args = instruction
+      .getArguments()
+      .filter((arg) => arg.getValue() !== "\\");
 
     if (!args || args.length === 0) return;
 
-    let curlArgIndex = -1,
-      quietFlagIndex = -1;
+    console.log(instruction.getArguments());
+    
 
-    args.forEach((arg, index) => {
-      if (!arg) return;
+    for (let i = 0; i < args.length; i++) {
+      const currentArg = args[i];
+      if (currentArg.getValue() !== "curl") continue;
 
-      const argValue = arg.getValue();
+      let range = null;
 
-      if (argValue === "curl") curlArgIndex = index;
-      if (argValue === "-f") quietFlagIndex = index;
-    });
+      if (i === 0) range = currentArg.getRange();
+      else if (args[i - 1].getValue() === "&&") range = currentArg.getRange();
 
-    if (quietFlagIndex <= curlArgIndex && quietFlagIndex > -1) return;
+      if (range === null) continue;
 
-    if (curlArgIndex === -1) return;
+      let urlArgIndex = -1;
 
-    const curlArg = args[curlArgIndex];
+      args.forEach((arg, index) => {
+        if (arg.getValue().startsWith("http")) urlArgIndex = index;
+      });
 
-    const hasQuietFlag = quietFlagIndex !== -1;
+      if (urlArgIndex <= i) continue;
 
-    if (!hasQuietFlag)
-      problems.push(
-        createRepairDiagnostic(curlArg.getRange(), F_CURL_MSG, F_CURL_SUFFIX)
-      );
+      const argsBetween = args
+        .slice(i, urlArgIndex)
+        .map((arg) => arg.getValue());
+
+      if (!argsBetween.includes("-f"))
+        problems.push(createRepairDiagnostic(range, F_CURL_MSG, F_CURL_SUFFIX));
+    }
   });
+
+  const wgetInstructions = getRunInstructionsWithArg(dockerfile, "wget");
 
   wgetInstructions.concat(curlInstructions).forEach((instruction) => {
     const args = instruction.getArguments();
