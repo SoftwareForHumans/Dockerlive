@@ -131,11 +131,15 @@ export class DynamicAnalysis {
 	}
 
 	genKey(range: Range, identifier?: string): string {
-		let key = `s${range.start.line}-${range.start.character}--e${range.end.line}-${range.end.character}`
-
-		if (identifier) key += `-id${identifier}`
-
-		return key;
+		try {
+			let key = `s${range.start.line}-${range.start.character}--e${range.end.line}-${range.end.character}`
+	
+			if (identifier) key += `-id${identifier}`
+	
+			return key;
+		} catch (error) {
+			
+		}
 	}
 
 	getDiagnostic(range: Range, identifier?: string): Diagnostic {

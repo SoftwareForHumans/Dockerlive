@@ -86,10 +86,10 @@ function getLangDepsAction(
   let replacementText = newlineChar;
 
   if (isNode) {
-    replacementText =
+    replacementText +=
       getInstructionText(fileContent, "RUN", "npm") + newlineChar;
   } else {
-    replacementText =
+    replacementText +=
       getInstructionText(fileContent, "RUN", "pip3") +
       newlineChar +
       getInstructionText(fileContent, "RUN", "pip") +
