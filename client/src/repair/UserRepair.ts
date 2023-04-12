@@ -14,7 +14,8 @@ import {
   isNodeProject,
 } from "./utils";
 
-const NO_ROOT_USER_MSG = "Add instruction to change user (COPY instructions will be updated accordingly).";
+const NO_ROOT_USER_MSG =
+  "Add instruction to change user (COPY instructions will be updated accordingly).";
 const NO_ROOT_USER_CODE = "R:NOROOTUSER";
 
 export default class UserRepair implements CodeActionProvider<CodeAction> {
@@ -37,12 +38,7 @@ export default class UserRepair implements CodeActionProvider<CodeAction> {
 
       if (!documentHasTwoCopys) {
         actions.push(
-          createAction(
-            actionTitle,
-            replacementText,
-            document,
-            diagnostic.range
-          )
+          createAction(actionTitle, replacementText, document, diagnostic.range)
         );
       } else {
         const lastCopyOccurrence = documentText.lastIndexOf("COPY");
@@ -103,13 +99,15 @@ function getCopyText(document: TextDocument): string {
     lastCopyOccurrence,
     lastCopyNewline
   );
-  const copyArgs = originalCopyText.substring("COPY ".length - 1);
+  const copyArgs = originalCopyText.substring("COPY ".length - 1).trim();
 
   const isNode = isNodeProject(document);
   const userText = isNode ? "node" : "python";
-  let chownText = `--chown=${userText}:${userText}`;
+  let chownText = `--chown=${userText}:${userText} `;
 
   if (copyArgs.includes("--chown")) chownText = "";
 
-  return newlineChar + "COPY " + chownText + copyArgs + newlineChar;
+  const copyText = `${newlineChar}COPY ${chownText}${copyArgs}${newlineChar}`
+
+  return copyText;
 }
