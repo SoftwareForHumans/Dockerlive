@@ -214,9 +214,6 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
 
     if (!args || args.length === 0) return;
 
-    console.log(instruction.getArguments());
-    
-
     for (let i = 0; i < args.length; i++) {
       const currentArg = args[i];
       if (currentArg.getValue() !== "curl") continue;
