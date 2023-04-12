@@ -207,6 +207,8 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
 
   const curlInstructions = getRunInstructionsWithArg(dockerfile, "curl");
 
+  const processedCurlInstructions = [];
+
   curlInstructions.forEach((instruction) => {
     const args = instruction
       .getArguments()
@@ -233,6 +235,8 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
 
       if (urlArgIndex <= i) continue;
 
+      processedCurlInstructions.push(instruction);
+
       const argsBetween = args
         .slice(i, urlArgIndex)
         .map((arg) => arg.getValue());
@@ -244,7 +248,7 @@ function checkNetworkUtils(dockerfile: Dockerfile): Diagnostic[] {
 
   const wgetInstructions = getRunInstructionsWithArg(dockerfile, "wget");
 
-  wgetInstructions.concat(curlInstructions).forEach((instruction) => {
+  wgetInstructions.concat(processedCurlInstructions).forEach((instruction) => {
     const args = instruction.getArguments();
 
     if (!args || args.length === 0) return;
