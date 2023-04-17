@@ -119,9 +119,18 @@ function checkHermitPorts(
     const range = getRangeBeforeEnd(dockerfile);
     if (!range) return null;
 
+    const ports = hermitExposeInstructions.map((instruction) =>
+      instruction.getArguments()[0].getValue()
+    );
+
+    if (!ports || ports.length === 0) return null;
+
     return createRepairDiagnostic(
       range,
-      HERMIT_PORTS_MSG_1,
+      HERMIT_PORTS_MSG_1 +
+        " The following port(s) should be exposed: " +
+        ports.join(",") +
+        ".",
       HERMIT_PORTS_SUFFIX
     );
   } else if (
@@ -179,7 +188,10 @@ function checkHermitPorts(
     if (needToRepair)
       return createRepairDiagnostic(
         range,
-        HERMIT_PORTS_MSG_2,
+        HERMIT_PORTS_MSG_2 +
+          " The following port(s) should be exposed: " +
+          hermitPorts.join(",") +
+          ".",
         HERMIT_PORTS_SUFFIX
       );
   }
@@ -214,9 +226,19 @@ function checkHermitDependencies(
 
       if (!range) return null;
 
+      const deps = getDepsFromInstructions(
+        hermitPkgInstructions,
+        packageManagerKeyword
+      );
+
+      if (!deps || deps.length === 0) return null;
+
       return createRepairDiagnostic(
         range,
-        HERMIT_DEPS_MSG_1,
+        HERMIT_DEPS_MSG_1 +
+          " The following dependencies should be installed: " +
+          deps.join(",") +
+          ".",
         HERMIT_DEPS_SUFFIX
       );
     } else if (
@@ -244,7 +266,10 @@ function checkHermitDependencies(
       if (!filesHaveSameDeps)
         return createRepairDiagnostic(
           range,
-          HERMIT_DEPS_MSG_2,
+          HERMIT_DEPS_MSG_2 +
+            "The following dependencies should be installed: " +
+            hermitDeps.join(",") +
+            ".",
           HERMIT_DEPS_SUFFIX
         );
     }

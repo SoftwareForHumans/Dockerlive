@@ -10,14 +10,16 @@ import {
   getRunInstructionsWithArg,
 } from "./utils";
 
-const NO_ROOT_USER_MSG = "A user other than root should be used.";
+const NO_ROOT_USER_MSG =
+  "A user other than root should be used. Running applications as root could lead to security problems if vulnerabilities in the project are exploited.";
 const NO_ROOT_USER_SUFFIX = "NOROOTUSER";
 
-const NO_ROOT_DIR_MSG = "A working directory other than / should be used.";
+const NO_ROOT_DIR_MSG =
+  "A working directory other than / should be used. This makes the directory structure more organized and keeps other files separate from the application's code.";
 const NO_ROOT_DIR_SUFFIX = "NOROOTDIR";
 
 const SINGLE_COPY_MSG =
-  "Two COPY instructions should be used, one to copy the files required for installing dependencies and another to copy the rest of the source code files.";
+  "Two COPY instructions should be used, one to copy the files required for installing dependencies and another to copy the rest of the source code files. This way Docker's layer caching can be used.";
 const SINGLE_COPY_SUFFIX = "SINGLECOPY";
 
 const NO_IMAGE_PIN_MSG =
@@ -25,14 +27,14 @@ const NO_IMAGE_PIN_MSG =
 const NO_IMAGE_PIN_SUFFIX = "NOIMAGEPIN";
 
 const NO_CACHE_MSG =
-  "The --no-cache option should be used when installing packages with APK.";
+  "The --no-cache option should be used when installing packages with APK. This prevents APK from storing a cache, making the container smaller.";
 const NO_CACHE_SUFFIX = "NOCACHE";
 
 const F_CURL_MSG =
   "The -f option should be used with curl to avoid errors if the request fails.";
 const F_CURL_SUFFIX = "FCURL";
 
-const NO_HTTP_URL_MSG = "HTTPS URLs should be used instead of HTTP URLs.";
+const NO_HTTP_URL_MSG = "HTTPS URLs should be used instead of HTTP URLs. HTTPS provides encryption, making the connection more secure.";
 const NO_HTTP_URL_SUFFIX = "NOHTTPURL";
 
 const NO_CD_MSG =
@@ -40,7 +42,7 @@ const NO_CD_MSG =
 const NO_CD_SUFFIX = "NOCD";
 
 const NO_ADD_MSG =
-  "The COPY instruction should be used instead of the ADD instruction, if possible.";
+  "The COPY instruction should be used instead of the ADD instruction, if possible. The ADD instruction has more features which can make its usage harder to understand.";
 const NO_ADD_SUFFIX = "NOADD";
 
 const NO_MAINTAINER_MSG = "The MAINTAINER instruction has been deprecated.";
@@ -55,15 +57,15 @@ const APT_LIST_MSG =
 const APT_LIST_SUFFIX = "APTLIST";
 
 const NO_INSTALL_RECOMMENDS_MSG =
-  "The --no-install-recommends option should be used with apt-get install.";
+  "The --no-install-recommends option should be used with apt-get install. This keeps recommended packages from being installed, reducing wasted space.";
 const NO_INSTALL_RECOMMENDS_SUFFIX = "NOINSTALLRECOMMENDS";
 
 const UPDATE_BEFORE_INSTALL_MSG =
-  "The apt-get update command should be executed before apt-get install.";
+  "The apt-get update command should be executed before apt-get install. This allows APT to update the list of packages.";
 const UPDATE_BEFORE_INSTALL_SUFFIX = "UPDATEBEFOREINSTALL";
 
 const CONFIRM_INSTALL_MSG =
-  "The -y option should be used with apt-get install.";
+  "The -y option should be used with apt-get install. This allows packages to be installed without prompting the user for confirmation.";
 const CONFIRM_INSTALL_SUFFIX = "CONFIRMINSTALL";
 
 export default function checkRepairableProblems(
