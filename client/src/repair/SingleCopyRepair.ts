@@ -71,6 +71,8 @@ export default class SingleCopyRepair
 
       const isNode = isNodeProject(document);
 
+      const chownText = getChownText(documentText);
+
       const firstCopy =
         "COPY " +
         (isNode ? "package*.json" : "requirements.txt") +
@@ -78,7 +80,7 @@ export default class SingleCopyRepair
         secondArg +
         (secondArg.endsWith("/") ? "" : "/") +
         newlineChar;
-      const secondCopy = newlineChar + "COPY . ." + newlineChar;
+      const secondCopy = `${newlineChar}COPY ${chownText}. .${newlineChar}`;
       const replacementText = firstCopy + textToBeMaintained + secondCopy;
 
       const rangeToBeReplaced = new Range(
@@ -98,4 +100,22 @@ export default class SingleCopyRepair
 
     return actions;
   }
+}
+
+function getChownText(documentText: string): string {
+  const userIndex = documentText.indexOf("USER");
+
+  if (userIndex === -1) return "";
+
+  const newlineChar = getNewline();
+
+  const newlineAfterUserIndex = documentText.indexOf(newlineChar, userIndex);
+
+  const userStartIndex = userIndex + "USER ".length;
+
+  const user = documentText.substring(userStartIndex, newlineAfterUserIndex);
+
+  const chownText = `--chown=${user}:${user} `;
+
+  return chownText;
 }
