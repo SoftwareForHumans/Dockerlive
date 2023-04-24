@@ -14,6 +14,7 @@ import {
   getNewline,
   isNodeProject,
 } from "./utils";
+import { getDistroUsed } from './utils';
 
 const HERMIT_DEPS_MSG = "Add/update command to install detected dependencies.";
 const HERMIT_DEPS_CODE = "R:HERMITDEPS";
@@ -157,11 +158,4 @@ function getDependenciesAction(
   );
 
   return action;
-}
-
-function getDistroUsed(fileContent: string): string {
-  if (fileContent.includes("alpine") || fileContent.includes("apk"))
-    return "alpine";
-
-  return "debian";
 }

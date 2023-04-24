@@ -99,3 +99,10 @@ function cleanupText(text: string): string {
 
   return text.replace(newlineChar + "#", "").trim();
 }
+
+export function getDistroUsed(fileContent: string): string {
+  if (fileContent.includes("alpine") || fileContent.includes("apk"))
+    return "alpine";
+
+  return "debian";
+}
