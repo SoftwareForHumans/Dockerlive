@@ -12,6 +12,7 @@ import {
   getNewline,
   getNumberOfCharsForNewline,
   isNodeProject,
+  processRange,
 } from "./utils";
 
 const NO_ROOT_USER_MSG =
@@ -37,8 +38,10 @@ export default class UserRepair implements CodeActionProvider<CodeAction> {
       const actionTitle = NO_ROOT_USER_MSG;
 
       if (!documentHasTwoCopys) {
+        const range = processRange(document, diagnostic.range);
+
         actions.push(
-          createAction(actionTitle, replacementText, document, diagnostic.range)
+          createAction(actionTitle, replacementText, document, range)
         );
       } else {
         const lastCopyOccurrence = documentText.lastIndexOf("COPY");

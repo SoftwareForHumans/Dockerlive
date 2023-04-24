@@ -13,6 +13,7 @@ import {
   getInstructionText,
   getNewline,
   isNodeProject,
+  processRange,
 } from "./utils";
 import { getDistroUsed } from './utils';
 
@@ -97,11 +98,13 @@ function getLangDepsAction(
       newlineChar;
   }
 
+  const range = processRange(document, diagnostic.range);
+
   return createAction(
     HERMIT_LANG_DEPS_MSG,
     replacementText,
     document,
-    diagnostic.range
+    range
   );
 }
 
@@ -122,11 +125,13 @@ function getPortsAction(
     replacementText += line + newlineChar;
   });
 
+  const range = processRange(document, diagnostic.range);
+
   const action = createAction(
     HERMIT_PORTS_MSG,
     replacementText,
     document,
-    diagnostic.range
+    range
   );
 
   return action;
@@ -150,11 +155,13 @@ function getDependenciesAction(
 
   const replacementText = newlineChar + contentToBeCopied + newlineChar;
 
+  const range = processRange(document, diagnostic.range);
+
   const action = createAction(
     HERMIT_DEPS_MSG,
     replacementText,
     document,
-    diagnostic.range
+    range
   );
 
   return action;

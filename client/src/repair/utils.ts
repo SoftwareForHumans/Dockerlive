@@ -85,7 +85,7 @@ export function processRange(document: TextDocument, range: Range): Range {
   const textInRange = document.getText(range);
 
   if (textInRange.trim() !== "") {
-    const line = range.start.line;
+    const line = range.start.line + 1;
     const character = 0;
     const pos = new Position(line, character);
     return new Range(pos, pos);
