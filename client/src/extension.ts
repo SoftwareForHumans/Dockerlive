@@ -19,9 +19,6 @@ import { Analytics } from "./analytics";
 import RepairProvider from "./repair/RepairProvider";
 import HermitRepairProvider from "./repair/HermitRepairProvider";
 import { generate, generateAlternative } from "./hermit/commands";
-import SingleCopyRepair from './repair/SingleCopyRepair';
-import UserRepair from './repair/UserRepair';
-import VersionPinRepair from './repair/VersionPinRepair';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -62,27 +59,6 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
       new RepairProvider()
-    )
-  );
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { language: "dockerfile", scheme: "file" },
-      new SingleCopyRepair()
-    )
-  );
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { language: "dockerfile", scheme: "file" },
-      new UserRepair()
-    )
-  );
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { language: "dockerfile", scheme: "file" },
-      new VersionPinRepair()
     )
   );
 

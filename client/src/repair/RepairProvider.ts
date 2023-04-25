@@ -7,7 +7,9 @@ import {
   Selection,
   TextDocument,
 } from "vscode";
-import { createAction, getNewline } from "./utils";
+import { createAction, getNewline, isNodeProject } from "./utils";
+import getCopyActionInfo from "./copy";
+import getUserActionInfo from "./user";
 
 const NO_INSTALL_RECOMMENDS_MSG =
   "Add --no-install-recommends option to the apt-get install command.";
@@ -47,6 +49,16 @@ const NO_HTTP_URL_CODE = "R:NOHTTPURL";
 
 const NO_ROOT_DIR_MSG = "Use WORKDIR to change the working directory.";
 const NO_ROOT_DIR_CODE = "R:NOROOTDIR";
+
+const NO_IMAGE_PIN_MSG = "Pin image version.";
+const NO_IMAGE_PIN_CODE = "R:NOIMAGEPIN";
+
+const NO_ROOT_USER_MSG =
+  "Add instruction to change user (COPY instructions will be updated accordingly).";
+const NO_ROOT_USER_CODE = "R:NOROOTUSER";
+
+const SINGLE_COPY_MSG = "Add a second COPY instruction.";
+const SINGLE_COPY_CODE = "R:SINGLECOPY";
 
 export default class RepairProvider implements CodeActionProvider<CodeAction> {
   provideCodeActions(
@@ -224,6 +236,38 @@ export default class RepairProvider implements CodeActionProvider<CodeAction> {
             document,
             range
           );
+          break;
+        }
+        case NO_IMAGE_PIN_CODE: {
+          const isNode = isNodeProject(document);
+
+          const image = isNode ? "node:18-slim" : "python:3.11-slim";
+
+          const replacementText = "FROM " + image;
+
+          action = createAction(
+            NO_IMAGE_PIN_MSG,
+            replacementText,
+            document,
+            diagnostic.range
+          );
+          break;
+        }
+        case NO_ROOT_USER_CODE: {
+          const actionTitle = NO_ROOT_USER_MSG;
+          const { replacementText, range } = getUserActionInfo(
+            document,
+            diagnostic
+          );
+          action = createAction(actionTitle, replacementText, document, range);
+          break;
+        }
+        case SINGLE_COPY_CODE: {
+          const actionTitle = SINGLE_COPY_MSG;
+          const actionInfo = getCopyActionInfo(document);
+          if (!actionInfo) continue;
+          const { replacementText, range } = actionInfo;
+          action = createAction(actionTitle, replacementText, document, range);
           break;
         }
         default:
