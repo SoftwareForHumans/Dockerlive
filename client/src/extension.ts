@@ -16,16 +16,12 @@ import { PerformanceGraphs } from "./performance";
 import { FilesystemVisualizer } from "./filesystem";
 import { Analytics } from "./analytics";
 
-import SimpleRepair from "./repair/SimpleRepair";
-import ConsecutiveRunRepair from "./repair/ConsecutiveRunRepair";
-import AptListRepair from "./repair/AptListRepair";
-import VersionPinRepair from "./repair/VersionPinRepair";
-import SingleCopyRepair from "./repair/SingleCopyRepair";
-import WorkDirRepair from "./repair/WorkDirRepair";
-import HermitRepair from "./repair/HermitRepair";
-import UserRepair from "./repair/UserRepair";
-import UrlRepair from "./repair/UrlRepair";
+import RepairProvider from "./repair/RepairProvider";
+import HermitRepairProvider from "./repair/HermitRepairProvider";
 import { generate, generateAlternative } from "./hermit/commands";
+import SingleCopyRepair from './repair/SingleCopyRepair';
+import UserRepair from './repair/UserRepair';
+import VersionPinRepair from './repair/VersionPinRepair';
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -65,28 +61,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
-      new SimpleRepair()
-    )
-  );
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { language: "dockerfile", scheme: "file" },
-      new ConsecutiveRunRepair()
-    )
-  );
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { language: "dockerfile", scheme: "file" },
-      new AptListRepair()
-    )
-  );
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { language: "dockerfile", scheme: "file" },
-      new VersionPinRepair()
+      new RepairProvider()
     )
   );
 
@@ -100,22 +75,6 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
-      new WorkDirRepair()
-    )
-  );
-
-  const hermitRepair = new HermitRepair();
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { language: "dockerfile", scheme: "file" },
-      hermitRepair
-    )
-  );
-
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { language: "dockerfile", scheme: "file" },
       new UserRepair()
     )
   );
@@ -123,7 +82,16 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(
       { language: "dockerfile", scheme: "file" },
-      new UrlRepair()
+      new VersionPinRepair()
+    )
+  );
+
+  const hermitRepair = new HermitRepairProvider();
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: "dockerfile", scheme: "file" },
+      hermitRepair
     )
   );
 

@@ -15,7 +15,7 @@ import {
   isNodeProject,
   processRange,
 } from "./utils";
-import { getDistroUsed } from './utils';
+import { getDistroUsed } from "./utils";
 
 const HERMIT_DEPS_MSG = "Add/update command to install detected dependencies.";
 const HERMIT_DEPS_CODE = "R:HERMITDEPS";
@@ -27,7 +27,9 @@ const HERMIT_LANG_DEPS_MSG =
   "Add command to install the required dependencies.";
 const HERMIT_LANG_DEPS_CODE = "R:HERMITLANGDEPS";
 
-export default class HermitRepair implements CodeActionProvider<CodeAction> {
+export default class HermitRepairProvider
+  implements CodeActionProvider<CodeAction>
+{
   hermitDockerfileContent: string;
 
   setHermitDockerfileContent(content: string) {
@@ -100,12 +102,7 @@ function getLangDepsAction(
 
   const range = processRange(document, diagnostic.range);
 
-  return createAction(
-    HERMIT_LANG_DEPS_MSG,
-    replacementText,
-    document,
-    range
-  );
+  return createAction(HERMIT_LANG_DEPS_MSG, replacementText, document, range);
 }
 
 function getPortsAction(

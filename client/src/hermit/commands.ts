@@ -7,7 +7,7 @@ import {
   rmdirSync,
   unlinkSync,
 } from "fs";
-import HermitRepair from "../repair/HermitRepair";
+import HermitRepairProvider from "../repair/HermitRepairProvider";
 import { sendNotification } from "../extension";
 
 const HERMIT_DYNAMIC_ANALYSIS_DURATION = 5;
@@ -46,7 +46,6 @@ export async function generate() {
     async (progress, _token) => {
       const cwd = getWorkDir();
 
-
       await new Promise((r) => setTimeout(r, 1000)); //workaround to avoid losing focus when the extension starts and the output panel steals focus
 
       const command = await vscode.window.showInputBox({
@@ -62,7 +61,9 @@ export async function generate() {
       });
 
       try {
-        execSync(`hermit -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION} "${command}"`, { cwd });
+        execSync(`hermit -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION} "${command}"`, {
+          cwd,
+        });
 
         progress.report({ increment: 50, message: "Analyzing container..." });
 
@@ -94,7 +95,7 @@ export async function generate() {
   );
 }
 
-export function generateAlternative(hermitRepair: HermitRepair) {
+export function generateAlternative(hermitRepair: HermitRepairProvider) {
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
