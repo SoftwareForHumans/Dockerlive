@@ -34,7 +34,8 @@ const F_CURL_MSG =
   "The -f option should be used with curl to avoid errors if the request fails.";
 const F_CURL_SUFFIX = "FCURL";
 
-const NO_HTTP_URL_MSG = "HTTPS URLs should be used instead of HTTP URLs. HTTPS provides encryption, making the connection more secure.";
+const NO_HTTP_URL_MSG =
+  "HTTPS URLs should be used instead of HTTP URLs. HTTPS provides encryption, making the connection more secure.";
 const NO_HTTP_URL_SUFFIX = "NOHTTPURL";
 
 const NO_CD_MSG =
@@ -386,18 +387,19 @@ function checkAptProblems(dockerfile: Dockerfile): Diagnostic[] {
   aptInstructions.forEach((instruction) => {
     const args = instruction.getArguments();
 
-    let aptGetArg: Argument = null;
+    let aptGetArg: Argument = null,
+      installArg: Argument = null;
 
     args.forEach((arg, index) => {
       const nextArg = args[index + 1];
       if (!nextArg) return;
-      if (arg.getValue() === "apt-get" && nextArg.getValue() === "install")
+      if (arg.getValue() === "apt-get" && nextArg.getValue() === "install") {
         aptGetArg = arg;
+        installArg = nextArg;
+      }
     });
 
-    const installArg = args.find((arg) => arg.getValue() === "install");
-
-    if (installArg === undefined) return; //goes to next iteration
+    if (!installArg) return; //goes to next iteration
 
     const missingElementProblems = checkMissingElements(
       aptGetArg,
