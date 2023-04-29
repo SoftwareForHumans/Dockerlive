@@ -96,7 +96,9 @@ function getLangDepsAction(
     replacementText +=
       getInstructionText(fileContent, "RUN", "pip3") +
       newlineChar +
-      getInstructionText(fileContent, "RUN", "pip") +
+      getInstructionText(fileContent, "RUN", "pip ") +
+      newlineChar +
+      getInstructionText(fileContent, "ENV", "PYTHONPATH") +
       newlineChar;
   }
 

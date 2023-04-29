@@ -62,11 +62,16 @@ export function getInstructionText(
   if (keywordIndex === -1) return "";
 
   const contentUntilKeyword = fileContent.substring(0, keywordIndex);
+  const contentAfterKeyword = fileContent.substring(keywordIndex);
 
   const instructionStartIndex =
     contentUntilKeyword.lastIndexOf(instructionName);
 
-  const offset = instructionStartIndex + instructionName.length;
+  const newlineChar = getNewline();
+
+  const firstNewlineAfterKeyword = contentAfterKeyword.indexOf(newlineChar) + keywordIndex;
+
+  const offset = firstNewlineAfterKeyword + newlineChar.length;
 
   let instructionEndIndex = fileContent.slice(offset).search(/[A-Z]/);
 
