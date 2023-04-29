@@ -9,7 +9,7 @@
 	"version": "1.0.19",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/davidreis97/Dockerlive.git"
+		"url": "https://github.com/SoftwareForHumans/Dockerlive/tree/v2-repair.git"
 	},
 	"publisher": "david-reis",
 	"categories": [],
