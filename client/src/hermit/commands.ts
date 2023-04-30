@@ -73,7 +73,7 @@ export async function generate() {
           resolve();
 
           vscode.window.showErrorMessage(
-            "Could not execute the tools required to generate the Dockerfile!"
+            "There was an error while trying to generate the Dockerfile. Please make sure the required tools are installed and that the command you provided is correct."
           );
         });
       }
