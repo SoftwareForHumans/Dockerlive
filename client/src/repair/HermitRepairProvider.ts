@@ -12,6 +12,7 @@ import {
   createAction,
   getInstructionText,
   getNewline,
+  getRangeLength,
   isNodeProject,
   processRange,
 } from "./utils";
@@ -124,7 +125,11 @@ function getPortsAction(
     replacementText += line + newlineChar;
   });
 
-  const range = processRange(document, diagnostic.range);
+  let range: Range;
+  const diagnosticRangeLength = getRangeLength(document, diagnostic.range);
+
+  if (diagnosticRangeLength > 3) range = diagnostic.range;
+  else range = processRange(document, diagnostic.range);
 
   const action = createAction(
     HERMIT_PORTS_MSG,
@@ -154,7 +159,11 @@ function getDependenciesAction(
 
   const replacementText = newlineChar + contentToBeCopied + newlineChar;
 
-  const range = processRange(document, diagnostic.range);
+  let range: Range;
+  const diagnosticRangeLength = getRangeLength(document, diagnostic.range);
+
+  if (diagnosticRangeLength > 3) range = diagnostic.range;
+  else range = processRange(document, diagnostic.range);
 
   const action = createAction(
     HERMIT_DEPS_MSG,

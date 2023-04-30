@@ -111,3 +111,7 @@ export function getDistroUsed(fileContent: string): string {
 
   return "debian";
 }
+
+export function getRangeLength(document: TextDocument, range: Range): number {
+  return document.getText(range).length;
+}
