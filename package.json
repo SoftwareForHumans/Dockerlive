@@ -60,11 +60,7 @@
 			{
 				"command": "dockerlive.generateAlternativeWithHermit",
 				"category": "Dockerlive",
-				"title": "Generate an alternative Dockerfile",
-				"icon": {
-					"light": "./resources/icons/hermit/hermit-crab.png",
-					"dark": "./resources/icons/hermit/hermit-crab.png"
-				}
+				"title": "Generate an alternative Dockerfile"
 			},
 			{
 				"command": "dockerlive.stop",
@@ -102,11 +98,6 @@
 				{
 					"when": "resourceLangId == dockerfile",
 					"command": "dockerlive.toggle",
-					"group": "navigation"
-				},
-				{
-					"when": "resourceLangId == dockerfile",
-					"command": "dockerlive.generateAlternativeWithHermit",
 					"group": "navigation"
 				}
 			]

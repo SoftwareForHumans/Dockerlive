@@ -123,6 +123,8 @@ export async function activate(context: vscode.ExtensionContext) {
         codeLensProvider.didChangeCodeLenses(data.uri, data.codeLenses);
       }
     });
+
+    vscode.commands.executeCommand("dockerlive.generateAlternativeWithHermit");
   });
 
   if (vscode.window.activeTextEditor)

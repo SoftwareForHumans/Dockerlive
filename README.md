@@ -35,7 +35,6 @@ Feedback generated:
 
 - [Docker Icon](https://iconscout.com/icons/docker) by [Icons8](https://iconscout.com/contributors/icons8) on [Iconscout](Iconscout)
 - [Arrow Icon](https://iconscout.com/icons/arrow) by [Mohit Gandhi](https://iconscout.com/contributors/mcgandhi61) on [Iconscout](Iconscout)
-- [Hermit crab icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/hermit-crab)
 
 ## TELEMETRY
 
