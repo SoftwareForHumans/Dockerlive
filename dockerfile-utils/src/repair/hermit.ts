@@ -21,10 +21,12 @@ const HERMIT_DEPS_MSG_1 =
   "Some dependencies that are missing from this Dockerfile have been detected.";
 const HERMIT_DEPS_MSG_2 =
   "The dependencies being installed don't match the detected ones.";
+const HERMIT_DEPS_MSG_3 =
+  "Some dependencies are being installed unnecessarily. No dependencies need to be installed using the system's package manager.";
 const HERMIT_DEPS_SUFFIX = "HERMITDEPS";
 
 const HERMIT_LANG_DEPS_MSG =
-  "Some commands that are needed to install dependencies are missing.";
+  "Some commands that are needed to install dependencies from the language's package manager are missing.";
 const HERMIT_LANG_DEPS_SUFFIX = "HERMITLANGDEPS";
 
 let hermitDockerfileContent: string = null;
@@ -205,74 +207,86 @@ function checkHermitDependencies(
 ): Diagnostic | null {
   const distro = getDistroUsed(dockerfile);
 
-  if (distro !== "") {
-    const packageManagerKeyword = distro === "debian" ? "apt-get" : "apk";
+  if (distro === "") return null;
 
-    const originalPkgInstructions = getRunInstructionsWithArg(
-      dockerfile,
+  const packageManagerKeyword = distro === "debian" ? "apt-get" : "apk";
+
+  const originalPkgInstructions = getRunInstructionsWithArg(
+    dockerfile,
+    packageManagerKeyword
+  );
+
+  const hermitPkgInstructions = getRunInstructionsWithArg(
+    hermitDockerfile,
+    packageManagerKeyword
+  );
+
+  if (
+    hermitPkgInstructions.length > 0 &&
+    originalPkgInstructions.length === 0
+  ) {
+    const range = getRangeAfterFrom(dockerfile);
+
+    if (!range) return null;
+
+    const deps = getDepsFromInstructions(
+      hermitPkgInstructions,
       packageManagerKeyword
     );
 
-    const hermitPkgInstructions = getRunInstructionsWithArg(
-      hermitDockerfile,
+    if (!deps || deps.length === 0) return null;
+
+    return createRepairDiagnostic(
+      range,
+      HERMIT_DEPS_MSG_1 +
+        " The following dependencies should be installed: " +
+        deps.join(",") +
+        ".",
+      HERMIT_DEPS_SUFFIX
+    );
+  } else if (
+    hermitPkgInstructions.length > 0 &&
+    originalPkgInstructions.length > 0
+  ) {
+    const originalDeps = getDepsFromInstructions(
+      originalPkgInstructions,
+      packageManagerKeyword
+    );
+    const hermitDeps = getDepsFromInstructions(
+      hermitPkgInstructions,
       packageManagerKeyword
     );
 
-    if (
-      hermitPkgInstructions.length > 0 &&
-      originalPkgInstructions.length === 0
-    ) {
-      const range = getRangeAfterFrom(dockerfile);
+    const filesHaveSameDeps = areArraysEqual(originalDeps, hermitDeps);
 
-      if (!range) return null;
+    const start = originalPkgInstructions[0].getRange().start;
+    const end =
+      originalPkgInstructions[originalPkgInstructions.length - 1].getRange()
+        .end;
 
-      const deps = getDepsFromInstructions(
-        hermitPkgInstructions,
-        packageManagerKeyword
-      );
+    const range = { start, end };
 
-      if (!deps || deps.length === 0) return null;
-
+    if (!filesHaveSameDeps)
       return createRepairDiagnostic(
         range,
-        HERMIT_DEPS_MSG_1 +
-          " The following dependencies should be installed: " +
-          deps.join(",") +
+        HERMIT_DEPS_MSG_2 +
+          "The following dependencies should be installed: " +
+          hermitDeps.join(",") +
           ".",
         HERMIT_DEPS_SUFFIX
       );
-    } else if (
-      hermitPkgInstructions.length > 0 &&
-      originalPkgInstructions.length > 0
-    ) {
-      const originalDeps = getDepsFromInstructions(
-        originalPkgInstructions,
-        packageManagerKeyword
-      );
-      const hermitDeps = getDepsFromInstructions(
-        hermitPkgInstructions,
-        packageManagerKeyword
-      );
+  } else if (
+    hermitPkgInstructions.length === 0 &&
+    originalPkgInstructions.length > 0
+  ) {    
+    const start = originalPkgInstructions[0].getRange().start;
+    const end =
+      originalPkgInstructions[originalPkgInstructions.length - 1].getRange()
+        .end;
 
-      const filesHaveSameDeps = areArraysEqual(originalDeps, hermitDeps);
+    const range = { start, end };
 
-      const start = originalPkgInstructions[0].getRange().start;
-      const end =
-        originalPkgInstructions[originalPkgInstructions.length - 1].getRange()
-          .end;
-
-      const range = { start, end };
-
-      if (!filesHaveSameDeps)
-        return createRepairDiagnostic(
-          range,
-          HERMIT_DEPS_MSG_2 +
-            "The following dependencies should be installed: " +
-            hermitDeps.join(",") +
-            ".",
-          HERMIT_DEPS_SUFFIX
-        );
-    }
+    return createRepairDiagnostic(range, HERMIT_DEPS_MSG_3, HERMIT_DEPS_SUFFIX);
   }
 
   return null;

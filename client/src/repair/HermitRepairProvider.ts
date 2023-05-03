@@ -18,14 +18,17 @@ import {
 } from "./utils";
 import { getDistroUsed } from "./utils";
 
-const HERMIT_DEPS_MSG = "Add/update command to install detected dependencies.";
+const HERMIT_DEPS_MSG_1 =
+  "Add/update command to install detected dependencies.";
+const HERMIT_DEPS_MSG_2 =
+  "Remove command that installs unnecessary dependencies.";
 const HERMIT_DEPS_CODE = "R:HERMITDEPS";
 
 const HERMIT_PORTS_MSG = "Add/update command to expose detected ports.";
 const HERMIT_PORTS_CODE = "R:HERMITPORTS";
 
 const HERMIT_LANG_DEPS_MSG =
-  "Add command to install the required dependencies.";
+  "Add command to install the required dependencies from the language's package manager.";
 const HERMIT_LANG_DEPS_CODE = "R:HERMITLANGDEPS";
 
 export default class HermitRepairProvider
@@ -71,6 +74,7 @@ export default class HermitRepairProvider
               document
             )
           );
+          break;
         default:
           continue;
       }
@@ -157,7 +161,15 @@ function getDependenciesAction(
 
   const newlineChar = getNewline();
 
-  const replacementText = newlineChar + contentToBeCopied + newlineChar;
+  let replacementText: string, actionTitle: string;
+
+  if (contentToBeCopied === "") {
+    actionTitle = HERMIT_DEPS_MSG_2;
+    replacementText = newlineChar;
+  } else {
+    actionTitle = HERMIT_DEPS_MSG_1;
+    replacementText = newlineChar + contentToBeCopied + newlineChar;
+  }
 
   let range: Range;
   const diagnosticRangeLength = getRangeLength(document, diagnostic.range);
@@ -165,12 +177,7 @@ function getDependenciesAction(
   if (diagnosticRangeLength > 3) range = diagnostic.range;
   else range = processRange(document, diagnostic.range);
 
-  const action = createAction(
-    HERMIT_DEPS_MSG,
-    replacementText,
-    document,
-    range
-  );
+  const action = createAction(actionTitle, replacementText, document, range);
 
   return action;
 }
