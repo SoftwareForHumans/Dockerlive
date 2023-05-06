@@ -290,12 +290,7 @@ function checkHermitDependencies(
       originalPkgInstructions[originalPkgInstructions.length - 1].getRange()
         .end;
 
-    const instruction = originalPkgInstructions[0]; //Assuming one instruction
-    let range;
-
-    range = restrictRange(instruction, packageManagerKeyword);
-
-    if (!range) range = { start, end };
+    const range = { start, end };
 
     return createRepairDiagnostic(range, HERMIT_DEPS_MSG_3, HERMIT_DEPS_SUFFIX);
   }

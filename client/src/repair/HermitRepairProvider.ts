@@ -183,6 +183,7 @@ function getDependenciesAction(
 
     actionTitle = HERMIT_DEPS_MSG_1;
     replacementText = initialText + processedContent;
+    if (initialText !== "") replacementText += newlineChar;
   }
 
   const action = createAction(actionTitle, replacementText, document, range);
