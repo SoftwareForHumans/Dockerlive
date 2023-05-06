@@ -25,7 +25,7 @@ function hermitGenerationCleanup(generatedFromScratch: boolean) {
     );
     rmdirSync(dir + "/tmp");
     renameSync(dir + "/Dockerfile.hermit", dir + "/Dockerfile");
-  }
+  } else unlinkSync(dir + "/.dockerignore");
 }
 
 function getWorkDir(): string {
