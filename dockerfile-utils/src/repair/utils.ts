@@ -3,6 +3,7 @@ import {
   Diagnostic,
   Range,
   DiagnosticSeverity,
+  Position,
 } from "vscode-languageserver-types";
 
 export function getRangeBeforeEnd(dockerfile: Dockerfile): Range | null {
@@ -100,6 +101,46 @@ export function getInstructionsWithKeyword(
   return dockerfile
     .getInstructions()
     .filter((instruction) => instruction.getKeyword() === keyword);
+}
+
+export function restrictRange(
+  instruction: Instruction,
+  keyword: string
+): Range | null {
+  try {
+    const args = instruction.getArguments();
+
+    let inDesiredRange = false,
+      start: Position,
+      end: Position;
+
+    for (let i = 0; i < args.length; i++) {
+      const arg = args[i];
+      if (!arg) continue;
+
+      if (arg.getValue() === "&&") {
+        if (inDesiredRange) {
+          inDesiredRange = false;
+          end = args[i - 1].getRange().end;
+        } else continue;
+      }
+
+      if (arg.getValue() === keyword) {
+        if (i === 0) {
+          inDesiredRange = true;
+          start = arg.getRange().start;
+        } else if (args[i - 1].getValue() === "&&") {
+          inDesiredRange = true;
+          start = arg.getRange().start;
+        }
+      }
+    }
+    if (inDesiredRange) end = args[args.length - 1].getRange().end;
+
+    return { start, end };
+  } catch (e) {
+    return null;
+  }
 }
 
 export function getProjectLang(dockerfile: Dockerfile): string {

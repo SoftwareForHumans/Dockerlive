@@ -161,21 +161,29 @@ function getDependenciesAction(
 
   const newlineChar = getNewline();
 
-  let replacementText: string, actionTitle: string;
-
-  if (contentToBeCopied === "") {
-    actionTitle = HERMIT_DEPS_MSG_2;
-    replacementText = newlineChar;
-  } else {
-    actionTitle = HERMIT_DEPS_MSG_1;
-    replacementText = newlineChar + contentToBeCopied + newlineChar;
-  }
-
   let range: Range;
   const diagnosticRangeLength = getRangeLength(document, diagnostic.range);
 
   if (diagnosticRangeLength > 3) range = diagnostic.range;
   else range = processRange(document, diagnostic.range);
+
+  let replacementText: string, actionTitle: string;
+
+  if (contentToBeCopied === "") {
+    actionTitle = HERMIT_DEPS_MSG_2;
+    replacementText = "";
+  } else {
+    let processedContent = contentToBeCopied
+      .slice("RUN apt-get update && ".length)
+      .replace(/[\n\\]/g, "")
+      .replace("\t", "")
+      .trim();
+
+    let initialText = diagnosticRangeLength > 3 ? "" : "RUN apt-get update && "
+
+    actionTitle = HERMIT_DEPS_MSG_1;
+    replacementText = initialText + processedContent;
+  }
 
   const action = createAction(actionTitle, replacementText, document, range);
 

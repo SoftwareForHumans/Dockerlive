@@ -10,6 +10,7 @@ import {
   getRangeAfterFrom,
   getRangeBeforeEnd,
   getRunInstructionsWithArg,
+  restrictRange,
 } from "./utils";
 
 const HERMIT_PORTS_MSG_1 = "Some ports that could be exposed were detected.";
@@ -264,7 +265,12 @@ function checkHermitDependencies(
       originalPkgInstructions[originalPkgInstructions.length - 1].getRange()
         .end;
 
-    const range = { start, end };
+    const instruction = originalPkgInstructions[0]; //Assuming one instruction
+    let range;
+
+    range = restrictRange(instruction, packageManagerKeyword);
+
+    if (!range) range = { start, end };
 
     if (!filesHaveSameDeps)
       return createRepairDiagnostic(
@@ -278,13 +284,18 @@ function checkHermitDependencies(
   } else if (
     hermitPkgInstructions.length === 0 &&
     originalPkgInstructions.length > 0
-  ) {    
+  ) {
     const start = originalPkgInstructions[0].getRange().start;
     const end =
       originalPkgInstructions[originalPkgInstructions.length - 1].getRange()
         .end;
 
-    const range = { start, end };
+    const instruction = originalPkgInstructions[0]; //Assuming one instruction
+    let range;
+
+    range = restrictRange(instruction, packageManagerKeyword);
+
+    if (!range) range = { start, end };
 
     return createRepairDiagnostic(range, HERMIT_DEPS_MSG_3, HERMIT_DEPS_SUFFIX);
   }
