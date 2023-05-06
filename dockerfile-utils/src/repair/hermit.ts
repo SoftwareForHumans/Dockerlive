@@ -222,6 +222,15 @@ function checkHermitDependencies(
     packageManagerKeyword
   );
 
+  const originalDeps = getDepsFromInstructions(
+    originalPkgInstructions,
+    packageManagerKeyword
+  );
+  const hermitDeps = getDepsFromInstructions(
+    hermitPkgInstructions,
+    packageManagerKeyword
+  );
+
   if (
     hermitPkgInstructions.length > 0 &&
     originalPkgInstructions.length === 0
@@ -249,16 +258,7 @@ function checkHermitDependencies(
     hermitPkgInstructions.length > 0 &&
     originalPkgInstructions.length > 0
   ) {
-    const originalDeps = getDepsFromInstructions(
-      originalPkgInstructions,
-      packageManagerKeyword
-    );
-    const hermitDeps = getDepsFromInstructions(
-      hermitPkgInstructions,
-      packageManagerKeyword
-    );
-
-    const filesHaveSameDeps = areArraysEqual(originalDeps, hermitDeps);
+    const noChangesRequired = compareDeps(originalDeps, hermitDeps, dockerfile);
 
     const start = originalPkgInstructions[0].getRange().start;
     const end =
@@ -272,7 +272,7 @@ function checkHermitDependencies(
 
     if (!range) range = { start, end };
 
-    if (!filesHaveSameDeps)
+    if (!noChangesRequired)
       return createRepairDiagnostic(
         range,
         HERMIT_DEPS_MSG_2 +
@@ -285,6 +285,8 @@ function checkHermitDependencies(
     hermitPkgInstructions.length === 0 &&
     originalPkgInstructions.length > 0
   ) {
+    const noChangesRequired = compareDeps(originalDeps, hermitDeps, dockerfile);
+
     const start = originalPkgInstructions[0].getRange().start;
     const end =
       originalPkgInstructions[originalPkgInstructions.length - 1].getRange()
@@ -292,7 +294,12 @@ function checkHermitDependencies(
 
     const range = { start, end };
 
-    return createRepairDiagnostic(range, HERMIT_DEPS_MSG_3, HERMIT_DEPS_SUFFIX);
+    if (!noChangesRequired)
+      return createRepairDiagnostic(
+        range,
+        HERMIT_DEPS_MSG_3,
+        HERMIT_DEPS_SUFFIX
+      );
   }
 
   return null;
@@ -360,4 +367,56 @@ function areArraysEqual(list1: string[], list2: string[]): boolean {
   }
 
   return true;
+}
+
+function compareDeps(
+  originalDeps: string[],
+  hermitDeps: string[],
+  originalDockerfile: Dockerfile
+): boolean {
+  const areEqual = areArraysEqual(originalDeps, hermitDeps);
+
+  let someOriginalDepsAreNeeded = false;
+
+  originalDeps.forEach((dep) => {
+    if (isDependencyNeeded(dep, originalDockerfile))
+      someOriginalDepsAreNeeded = true;
+  });
+
+  if (someOriginalDepsAreNeeded) return true;
+  else if (areEqual) return true;
+
+  return false;
+}
+
+function isDependencyNeeded(
+  dependency: string,
+  dockerfile: Dockerfile
+): boolean {
+  const runInstructions = getInstructionsWithKeyword(dockerfile, "RUN");
+
+  if (!runInstructions) return false;
+
+  let isDepNeeded = false;
+
+  runInstructions.forEach((instruction) => {
+    const args = instruction.getArguments();
+
+    if (!args) return;
+
+    for (let i = 0; i < args.length; i++) {
+      const arg = args[i];
+
+      const argIsContainedInDep = dependency.includes(arg.getValue());
+
+      if (argIsContainedInDep) {
+        if (i === 0) isDepNeeded = true;
+        else if (args[i - 1].getValue() === "&&") {
+          isDepNeeded = true;
+        }
+      }
+    }
+  });
+
+  return isDepNeeded;
 }
