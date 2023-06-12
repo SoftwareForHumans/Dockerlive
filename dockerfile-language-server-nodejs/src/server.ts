@@ -427,6 +427,12 @@ connection.onNotification("dockerlive/getContainerName", () => {
 	});
 });
 
+connection.onNotification("dockerlive/forceValidation", () => {
+	for (const key in documents) {
+		validateTextDocument(documents[key]);
+	}
+})
+
 interface ValidatorConfiguration {
 	deprecatedMaintainer?: string;
 	directiveCasing?: string;

@@ -15,8 +15,10 @@ import {
 import { PerformanceGraphs } from "./performance";
 import { FilesystemVisualizer } from "./filesystem";
 import { Analytics } from "./analytics";
-import { execSync } from "child_process";
-import { renameSync, rmdirSync, unlinkSync } from "fs";
+
+import RepairProvider from "./repair/RepairProvider";
+import HermitRepairProvider from "./repair/HermitRepairProvider";
+import { generate, generateAlternative } from "./hermit/commands";
 
 let client: LanguageClient;
 let analytics: Analytics;
@@ -24,8 +26,6 @@ let performanceCurrentPanel: vscode.WebviewPanel | undefined;
 let filesystemCurrentPanel: vscode.WebviewPanel | undefined;
 let initialData: any;
 let currentDocumentUri: string;
-
-const HERMIT_DYNAMIC_ANALYSIS_DURATION = 5;
 
 export async function activate(context: vscode.ExtensionContext) {
   let dockerlive = vscode.extensions.getExtension("david-reis.dockerlive");
@@ -55,88 +55,27 @@ export async function activate(context: vscode.ExtensionContext) {
     analytics.sendEvent("toggleAnalysis");
   });
 
-  vscode.commands.registerCommand("dockerlive.generateWithHermit", async () => {
-    vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: "Generating Dockerfile",
-        cancellable: false,
-      },
-      async (progress, _token) => {
-        const cwd = getWorkDir();
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: "dockerfile", scheme: "file" },
+      new RepairProvider()
+    )
+  );
 
-        await new Promise((r) => setTimeout(r, 1000)); //workaround to avoid losing focus when the extension starts and the output panel steals focus
+  const hermitRepair = new HermitRepairProvider();
 
-        const command = await vscode.window.showInputBox({
-          prompt: "Enter the command used to start the service",
-          ignoreFocusOut: true,
-        });
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: "dockerfile", scheme: "file" },
+      hermitRepair
+    )
+  );
 
-        if (command === undefined) return;
-
-        progress.report({
-          increment: 0,
-          message: "Generating initial Dockerfile...",
-        });
-
-        execSync(`hermit "${command}"`, { cwd });
-
-        progress.report({ increment: 50, message: "Analyzing container..." });
-
-        execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd });
-
-        hermitGenerationCleanup(true);
-
-        progress.report({
-          increment: 50,
-          message: "Finishing generation and performing cleanup...",
-        });
-
-        return new Promise<void>((resolve) => {
-          resolve();
-          vscode.window.showInformationMessage(
-            "Dockerfile generation has been completed!"
-          );
-        });
-      }
-    );
-  });
+  vscode.commands.registerCommand("dockerlive.generateWithHermit", generate);
 
   vscode.commands.registerCommand(
     "dockerlive.generateAlternativeWithHermit",
-    () => {
-      vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Generating Dockerfile",
-          cancellable: false,
-        },
-        (progress, _token) => {
-          progress.report({
-            increment: 0,
-            message: "Performing analysis...",
-          });
-
-          const cwd = getWorkDir();
-
-          execSync(`hermit -c -t ${HERMIT_DYNAMIC_ANALYSIS_DURATION}`, { cwd });
-
-          progress.report({
-            increment: 100,
-            message: "Finishing generation and performing cleanup...",
-          });
-
-          hermitGenerationCleanup(false);
-
-          return new Promise<void>((resolve) => {
-            resolve();
-            vscode.window.showInformationMessage(
-              "Dockerfile generation has been completed!"
-            );
-          });
-        }
-      );
-    }
+    generateAlternative.bind(null, hermitRepair)
   );
 
   let codeLensProvider = new DockerfileCodeLensProvider();
@@ -184,6 +123,8 @@ export async function activate(context: vscode.ExtensionContext) {
         codeLensProvider.didChangeCodeLenses(data.uri, data.codeLenses);
       }
     });
+
+    vscode.commands.executeCommand("dockerlive.generateAlternativeWithHermit");
   });
 
   if (vscode.window.activeTextEditor)
@@ -194,30 +135,6 @@ export async function activate(context: vscode.ExtensionContext) {
       currentDocumentUri = editor.document.uri.toString();
     }
   });
-}
-
-function hermitGenerationCleanup(generatedFromScratch: boolean) {
-  const dir = getWorkDir();
-
-  ["Dockerfile.strace", "syscall.log"].forEach((file) =>
-    unlinkSync(dir + "/" + file)
-  );
-
-  if (generatedFromScratch) {
-    ["Dockerfile", "tmp/syscall.log"].forEach((file) =>
-      unlinkSync(dir + "/" + file)
-    );
-    rmdirSync(dir + "/tmp");
-    renameSync(dir + "/Dockerfile.hermit", dir + "/Dockerfile");
-  }
-}
-
-function getWorkDir(): string {
-  const folders = vscode.workspace.workspaceFolders;
-
-  if (folders === undefined) return "";
-
-  return folders[0].uri.fsPath;
 }
 
 function sendPartitionedFilesystemData(data) {
@@ -511,4 +428,8 @@ class DockerfileCodeLensProvider implements vscode.CodeLensProvider {
   resolveCodeLens(codeLens: vscode.CodeLens): vscode.CodeLens {
     return codeLens;
   }
+}
+
+export function sendNotification(method: string) {
+  client.sendNotification(method);
 }
