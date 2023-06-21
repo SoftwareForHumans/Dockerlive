@@ -6,10 +6,10 @@
 	"description": "Live Programming environment for Dockerfiles",
 	"author": "David Reis",
 	"license": "MIT",
-	"version": "1.0.19",
+	"version": "2.0.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/davidreis97/Dockerlive.git"
+		"url": "https://github.com/SoftwareForHumans/Dockerlive/tree/v2-repair.git"
 	},
 	"publisher": "david-reis",
 	"categories": [],
@@ -24,7 +24,8 @@
 	"activationEvents": [
 		"onLanguage:dockerfile",
 		"onCommand:dockerlive.showPerformance",
-		"onCommand:dockerlive.showFilesystem"
+		"onCommand:dockerlive.showFilesystem",
+		"onCommand:dockerlive.generateWithHermit"
 	],
 	"main": "./client/out/extension",
 	"contributes": {
@@ -57,6 +58,11 @@
 				}
 			},
 			{
+				"command": "dockerlive.generateAlternativeWithHermit",
+				"category": "Dockerlive",
+				"title": "Generate an alternative Dockerfile"
+			},
+			{
 				"command": "dockerlive.stop",
 				"category": "Dockerlive",
 				"title": "Stop the test container and dynamic analysis"
@@ -70,6 +76,11 @@
 				"command": "dockerlive.openShell",
 				"category": "Dockerlive",
 				"title": "Open shell inside container"
+			},
+			{
+				"command": "dockerlive.generateWithHermit",
+				"category": "Dockerlive",
+				"title": "Generate a Dockerfile"
 			}
 		],
 		"menus": {
@@ -112,6 +123,7 @@
 		"dockerfile-ast": "0.0.20",
 		"dockerode": "^3.1.0",
 		"file-uri-to-path": "^2.0.0",
+		"os": "^0.1.2",
 		"parse-pairs": "^1.0.0",
 		"strip-ansi": "^6.0.0",
 		"table": "^5.4.6",
@@ -120,6 +132,7 @@
 		"vscode-extension-telemetry": "^0.1.5",
 		"vscode-languageserver": "^6.1.0",
 		"vscode-languageserver-protocol": "^3.15.1",
+		"vscode-languageserver-textdocument": "^1.0.8",
 		"vscode-languageserver-types": "^3.15.1",
 		"xml2js": "^0.4.23"
 	}

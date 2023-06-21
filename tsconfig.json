@@ -11,7 +11,7 @@
 		"dockerfile-language-service",
 		"dockerfile-utils",
 		"client"
-	],
+, "client/src/repair"	],
 	"exclude": [
 		"node_modules",
 		".vscode-test",
